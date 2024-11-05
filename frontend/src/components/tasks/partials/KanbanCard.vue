@@ -40,7 +40,7 @@
 					</span>
 				</div>
 				<div v-if="projectTitle" v-html="projectTitleFormatted">
-		<!--			{{ projectTitle }} -->
+					{{ projectTitle }} 
 				</div>
 			</div>
 			<span
