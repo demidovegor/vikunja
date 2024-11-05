@@ -54,7 +54,7 @@
 						class="task-link"
 						tabindex="-1"
 					>
-						{{ task.title }}
+						<span v-html="parseLinks(task.title)"></span>
 					</RouterLink>
 				</span>
 
@@ -292,6 +292,19 @@ useIntervalFn(updateDueDate, 60_000, {
 	immediateCallback: true,
 })
 onMounted(updateDueDate)
+
+const parseLinks = computed(() => {
+    const urlPattern = /(https?:\/\/[^\s]+)/g; // Regular expression to find URLs
+    const parts = text.split(urlPattern); // Split the text by the URLs
+    return parts.map(part => {
+        // If the part matches the URL pattern, return an anchor tag
+        if (urlPattern.test(part)) {
+            return `<a href="${part}" target="_blank" rel="noopener noreferrer">${part}</a>`;
+        }
+        // Otherwise, return the text as is
+        return part;
+    }).join(''); // Join the parts back into a single string
+});
 
 let oldTask
 
