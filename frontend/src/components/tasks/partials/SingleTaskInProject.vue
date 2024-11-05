@@ -293,7 +293,7 @@ useIntervalFn(updateDueDate, 60_000, {
 })
 onMounted(updateDueDate)
 
-const parseLinks = computed(() => {
+function parseLinks(text: string) {
     const urlPattern = /(https?:\/\/[^\s]+)/g; // Regular expression to find URLs
     const parts = text.split(urlPattern); // Split the text by the URLs
     return parts.map(part => {
@@ -304,7 +304,7 @@ const parseLinks = computed(() => {
         // Otherwise, return the text as is
         return part;
     }).join(''); // Join the parts back into a single string
-});
+}
 
 let oldTask
 
