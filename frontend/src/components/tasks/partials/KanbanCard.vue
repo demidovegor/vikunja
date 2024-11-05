@@ -39,8 +39,8 @@
 						{{ task.position }}
 					</span>
 				</div>
-				<div v-if="projectTitle" v-html="projectTitleFormatted">
-<!--					{{ projectTitle }} -->
+				<div v-if="projectTitle">
+					{{ projectTitle }}
 				</div>
 			</div>
 			<span
@@ -56,7 +56,7 @@
 					{{ formatDateSince(task.dueDate) }}
 				</time>
 			</span>
-			<h3>{{ task.title }}</h3>
+			<h3 v-html="parseLinks(task.title)"></h3>
 
 			<ProgressBar
 				v-if="task.percentDone > 0"
@@ -152,27 +152,6 @@ const projectTitle = computed(() => {
 	return project?.title
 })
 
-const projectTitleFormatted = computed(() => {
-	if (!projectTitle.value) return '';
-
-    // Regex to match URLs in the text
-    const urlPattern = /https?:\/\/[^\s]+/g;
-
-    // Split the title by URLs, creating an array of text and links
-    const parts = projectTitle.value.split(urlPattern).map(part => part.trim());
-    const links = projectTitle.value.match(urlPattern) || [];
-
-    // Combine the text and links into HTML
-    return parts.map((part, index) => {
-        const link = links[index - 1]; // Get the link that corresponds to the text part
-        if (link) {
-            return `${part} <a href="${link}" target="_blank" rel="noopener noreferrer">${link}</a>`;
-        }
-        return part;
-    }).join('');
-});
-
-
 const showTaskPosition = computed(() => window.DEBUG_TASK_POSITION)
 
 async function toggleTaskDone(task: ITask) {
@@ -189,6 +168,19 @@ async function toggleTaskDone(task: ITask) {
 	} finally {
 		loadingInternal.value = false
 	}
+}
+
+function parseLinks(text: string) {
+    const urlPattern = /(https?:\/\/[^\s]+)/g; // Regular expression to find URLs
+    const parts = text.split(urlPattern); // Split the text by the URLs
+    return parts.map(part => {
+        // If the part matches the URL pattern, return an anchor tag
+        if (urlPattern.test(part)) {
+            return `<a href="${part}" target="_blank" rel="noopener noreferrer">${part}</a>`;
+        }
+        // Otherwise, return the text as is
+        return part;
+    }).join(''); // Join the parts back into a single string
 }
 
 function openTaskDetail() {
