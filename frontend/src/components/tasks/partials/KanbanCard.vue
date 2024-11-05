@@ -39,8 +39,8 @@
 						{{ task.position }}
 					</span>
 				</div>
-				<div v-if="projectTitle">
-					{{ projectTitle }}
+				<div v-if="projectTitle" v-html="projectTitleFormatted">
+		<!--			{{ projectTitle }} -->
 				</div>
 			</div>
 			<span
@@ -151,6 +151,17 @@ const projectTitle = computed(() => {
 	const project = projectStore.projects[props.task.projectId]
 	return project?.title
 })
+
+const projectTitleFormatted = computed(() => {
+	if (!projectTitle.value) return '';
+
+	// Regular expression to detect URLs and wrap them in <a> tags
+	const urlRegex = /(https?:\/\/[^\s]+)/g;
+	return projectTitle.value.replace(urlRegex, (url) => {
+		return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+	});
+});
+
 
 const showTaskPosition = computed(() => window.DEBUG_TASK_POSITION)
 
