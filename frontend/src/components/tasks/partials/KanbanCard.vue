@@ -40,7 +40,7 @@
 					</span>
 				</div>
 				<div v-if="projectTitle" v-html="projectTitleFormatted">
-					{{ projectTitle }} 
+<!--					{{ projectTitle }} -->
 				</div>
 			</div>
 			<span
@@ -155,11 +155,21 @@ const projectTitle = computed(() => {
 const projectTitleFormatted = computed(() => {
 	if (!projectTitle.value) return '';
 
-	// Regular expression to detect URLs and wrap them in <a> tags
-	const urlRegex = /(https?:\/\/[^\s]+)/g;
-	return projectTitle.value.replace(urlRegex, (url) => {
-		return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-	});
+    // Regex to match URLs in the text
+    const urlPattern = /https?:\/\/[^\s]+/g;
+
+    // Split the title by URLs, creating an array of text and links
+    const parts = projectTitle.value.split(urlPattern).map(part => part.trim());
+    const links = projectTitle.value.match(urlPattern) || [];
+
+    // Combine the text and links into HTML
+    return parts.map((part, index) => {
+        const link = links[index - 1]; // Get the link that corresponds to the text part
+        if (link) {
+            return `${part} <a href="${link}" target="_blank" rel="noopener noreferrer">${link}</a>`;
+        }
+        return part;
+    }).join('');
 });
 
 
