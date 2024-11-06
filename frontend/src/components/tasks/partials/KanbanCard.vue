@@ -56,7 +56,7 @@
 					{{ formatDateSince(task.dueDate) }}
 				</time>
 			</span>
-			<h3>{{ task.title }}</h3>
+			<h3 v-html="parseLinks(task.title)"></h3>
 
 			<ProgressBar
 				v-if="task.percentDone > 0"
@@ -168,6 +168,19 @@ async function toggleTaskDone(task: ITask) {
 	} finally {
 		loadingInternal.value = false
 	}
+}
+
+function parseLinks(text: string) {
+    const urlPattern = /(https?:\/\/[^\s]+)/g; // Regular expression to find URLs
+    const parts = text.split(urlPattern); // Split the text by the URLs
+    return parts.map(part => {
+        // If the part matches the URL pattern, return an anchor tag
+        if (urlPattern.test(part)) {
+            return `<a href="${part}" target="_blank" rel="noopener noreferrer">${part}</a>`;
+        }
+        // Otherwise, return the text as is
+        return part;
+    }).join(''); // Join the parts back into a single string
 }
 
 function openTaskDetail() {
