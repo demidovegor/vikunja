@@ -63,12 +63,11 @@ func ListUsers(s *xorm.Session, search string, currentUser *User, opts *ProjectU
 				continue
 			}
 
-			var usernameCond builder.Cond = builder.Eq{"username": queryPart}
+			var usernameCond builder.Cond
 			if db.Type() == schemas.POSTGRES {
-				usernameCond = builder.Expr("username ILIKE ?", queryPart)
-			}
-			if db.Type() == schemas.SQLITE {
-				usernameCond = builder.Expr("username = ? COLLATE NOCASE", queryPart)
+    			usernameCond = builder.Expr("username ILIKE ?", queryPart+"%")
+			} else if db.Type() == schemas.SQLITE {
+    			usernameCond = builder.Expr("username LIKE ? COLLATE NOCASE", queryPart+"%")
 			}
 
 			conds = append(conds,
