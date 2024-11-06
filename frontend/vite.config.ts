@@ -93,9 +93,15 @@ export default defineConfig(({mode}) => {
 		},
 		css: {
 			preprocessorOptions: {
+				sass: {
+					api: 'modern-compiler',
+					quietDeps: true, // silence deprecation warnings
+				},
 				scss: {
+					api: 'modern-compiler',
 					additionalData: PREFIXED_SCSS_STYLES,
-					charset: false, // fixes  "@charset" must be the first rule in the file" warnings
+					charset: false, // fixes  "@charset" must be the first rule in the file" warnings,
+					quietDeps: true, // silence deprecation warnings
 				},
 			},
 			postcss: {
@@ -217,7 +223,7 @@ export default defineConfig(({mode}) => {
 		build: {
 			target: 'esnext',
 			// required for sentry debugging: tells vite to create source maps
-			sourcemap: true,
+			sourcemap: Boolean(env.SENTRY_AUTH_TOKEN),
 			rollupOptions: {
 				plugins: [
 					visualizer({
