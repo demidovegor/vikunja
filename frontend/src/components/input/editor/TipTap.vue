@@ -168,6 +168,7 @@ import {History} from '@tiptap/extension-history'
 import {HorizontalRule} from '@tiptap/extension-horizontal-rule'
 import {Italic} from '@tiptap/extension-italic'
 import {ListItem} from '@tiptap/extension-list-item'
+import Mention from '@tiptap/extension-mention'
 import {OrderedList} from '@tiptap/extension-ordered-list'
 import {Paragraph} from '@tiptap/extension-paragraph'
 import {Strike} from '@tiptap/extension-strike'
@@ -177,6 +178,7 @@ import {Node} from '@tiptap/pm/model'
 
 import Commands from './commands'
 import suggestionSetup from './suggestion'
+import mentionSuggestionSetup from './mention'
 
 import {lowlight} from 'lowlight'
 
@@ -408,6 +410,12 @@ const extensions : Extensions = [
 			'i',
 		)).test(href),
 		protocols: additionalLinkProtocols,
+	}),
+	Mention.configure({
+		suggestion: mentionSuggestionSetup(t),
+		HTMLAttributes: {
+          class: 'mention',
+        },
 	}),
 	Table.configure({
 		resizable: true,
@@ -1042,5 +1050,11 @@ ul.tiptap__editor-actions {
 	a:hover {
 		text-decoration: underline;
 	}
+}
+
+.mention {
+	background: var(--grey-200);
+	border-radius: $radius;
+	padding: .15rem .25rem;
 }
 </style>
