@@ -191,10 +191,12 @@
 											</div>
 											<x-button
 												v-else
+												v-tooltip="bucket.limit > 0 && bucket.count >= bucket.limit ? $t('project.kanban.bucketLimitReached') : ''"
 												class="is-fullwidth has-text-centered"
 												:shadow="false"
 												icon="plus"
 												variant="secondary"
+												:disabled="bucket.limit > 0 && bucket.count >= bucket.limit"
 												@click="toggleShowNewTaskInput(bucket.id)"
 											>
 												{{
@@ -569,7 +571,6 @@ async function addTaskToBucket(bucketId: IBucket['id']) {
 		bucketId,
 		projectId: project.value.id,
 	})
-	toggleShowNewTaskInput(bucketId)
 	newTaskText.value = ''
 	kanbanStore.addTaskToBucket(task)
 	scrollTaskContainerToTop(bucketId)

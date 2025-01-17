@@ -17,6 +17,7 @@ import {success} from '@/message'
 import {useBaseStore} from '@/stores/base'
 import {getSavedFilterIdFromProjectId} from '@/services/savedFilter'
 import type {IProjectView} from '@/modelTypes/IProjectView'
+import {RIGHTS} from '@/constants/rights.ts'
 
 const {add, remove, search, update} = createNewIndexer('projects', ['title', 'description'])
 
@@ -41,6 +42,24 @@ export const useProjectStore = defineStore('project', () => {
 
 	const getChildProjects = computed(() => {
 		return (id: IProject['id']) => projectsArray.value.filter(p => p.parentProjectId === id)
+	})
+
+	const getAncestors = computed(() => {
+		return (project: IProject): IProject[] => {
+			if (typeof project === 'undefined') {
+				return []
+			}
+
+			if (!project?.parentProjectId) {
+				return [project]
+			}
+
+			const parentProject = projects.value[project.parentProjectId]
+			return [
+				...(parentProject ? getAncestors.value(parentProject) : []),
+				project,
+			]
+		}
 	})
 
 	const findProjectByExactname = computed(() => {
@@ -200,22 +219,6 @@ export const useProjectStore = defineStore('project', () => {
 
 		return loadedProjects
 	}
-
-	function getAncestors(project: IProject): IProject[] {
-		if (typeof project === 'undefined') {
-			return []
-		}
-
-		if (!project?.parentProjectId) {
-			return [project]
-		}
-
-		const parentProject = projects.value[project.parentProjectId]
-		return [
-			...(parentProject ? getAncestors(parentProject) : []),
-			project,
-		]
-	}
 	
 	function setProjectView(view: IProjectView) {
 		const views = [...projects.value[view.projectId].views]
@@ -306,6 +309,9 @@ export function useProject(projectId: MaybeRefOrGetter<IProject['id']>) {
 		})
 
 		const duplicate = await projectDuplicateService.create(projectDuplicate)
+		if (duplicate.duplicatedProject) {
+			duplicate.duplicatedProject.maxRight = RIGHTS.ADMIN
+		}
 
 		projectStore.setProject(duplicate.duplicatedProject)
 		success({message: t('project.duplicate.success')})

@@ -32,6 +32,8 @@ type TaskCollection struct {
 	ProjectID     int64 `param:"project" json:"-"`
 	ProjectViewID int64 `param:"view" json:"-"`
 
+	Search string `query:"s" json:"s"`
+
 	// The query parameter to sort by. This is for ex. done, priority, etc.
 	SortBy    []string `query:"sort_by" json:"sort_by"`
 	SortByArr []string `query:"sort_by[]" json:"-"`
@@ -181,6 +183,10 @@ func getRelevantProjectsFromCollection(s *xorm.Session, a web.Auth, tf *TaskColl
 }
 
 func getFilterValueForBucketFilter(filter string, view *ProjectView) (newFilter string, err error) {
+	if view.BucketConfigurationMode != BucketConfigurationModeFilter {
+		return filter, nil
+	}
+
 	re := regexp.MustCompile(`bucket_id\s*=\s*(\d+)`)
 
 	match := re.FindStringSubmatch(filter)
@@ -195,7 +201,7 @@ func getFilterValueForBucketFilter(filter string, view *ProjectView) (newFilter 
 
 	for id, bucket := range view.BucketConfiguration {
 		if id == bucketID {
-			return re.ReplaceAllString(filter, `(`+bucket.Filter+`)`), nil
+			return re.ReplaceAllString(filter, `(`+bucket.Filter.Filter+`)`), nil
 		}
 	}
 
@@ -228,9 +234,17 @@ func (tf *TaskCollection) ReadAll(s *xorm.Session, a web.Auth, search string, pa
 	// If the project id is < -1 this means we're dealing with a saved filter - in that case we get and populate the filter
 	// -1 is the favorites project which works as intended
 	if !tf.isSavedFilter && tf.ProjectID < -1 {
-		sf, err := getSavedFilterSimpleByID(s, getSavedFilterIDFromProjectID(tf.ProjectID))
+		sf, err := GetSavedFilterSimpleByID(s, GetSavedFilterIDFromProjectID(tf.ProjectID))
 		if err != nil {
 			return nil, 0, 0, err
+		}
+
+		canRead, _, err := sf.CanRead(s, a)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		if !canRead {
+			return nil, 0, 0, ErrGenericForbidden{}
 		}
 
 		// By prepending sort options before the saved ones from the filter, we make sure the supplied sort
@@ -263,7 +277,11 @@ func (tf *TaskCollection) ReadAll(s *xorm.Session, a web.Auth, search string, pa
 		tc.isSavedFilter = true
 
 		if tf.Filter != "" {
-			tc.Filter = "(" + tf.Filter + ") && (" + tc.Filter + ")"
+			if tc.Filter != "" {
+				tc.Filter = "(" + tf.Filter + ") && (" + tc.Filter + ")"
+			} else {
+				tc.Filter = tf.Filter
+			}
 		}
 
 		return tc.ReadAll(s, a, search, page, perPage)
@@ -277,21 +295,34 @@ func (tf *TaskCollection) ReadAll(s *xorm.Session, a web.Auth, search string, pa
 			return nil, 0, 0, err
 		}
 
-		if view.Filter != "" {
-			if tf.Filter != "" {
-				tf.Filter = "(" + tf.Filter + ") && (" + view.Filter + ")"
-			} else {
-				tf.Filter = view.Filter
+		if view.Filter != nil {
+			if view.Filter.Filter != "" {
+				if tf.Filter != "" {
+					tf.Filter = "(" + tf.Filter + ") && (" + view.Filter.Filter + ")"
+				} else {
+					tf.Filter = view.Filter.Filter
+				}
+				tf.FilterIncludeNulls = view.Filter.FilterIncludeNulls
+			}
+
+			if view.Filter.FilterTimezone != "" {
+				tf.FilterTimezone = view.Filter.FilterTimezone
+			}
+
+			if view.Filter.FilterIncludeNulls {
+				tf.FilterIncludeNulls = view.Filter.FilterIncludeNulls
+			}
+
+			if view.Filter.Search != "" {
+				search = view.Filter.Search
 			}
 		}
 
 		if strings.Contains(tf.Filter, taskPropertyBucketID) {
 			filteringForBucket = true
-			if view.BucketConfigurationMode == BucketConfigurationModeFilter {
-				tf.Filter, err = getFilterValueForBucketFilter(tf.Filter, view)
-				if err != nil {
-					return nil, 0, 0, err
-				}
+			tf.Filter, err = getFilterValueForBucketFilter(tf.Filter, view)
+			if err != nil {
+				return nil, 0, 0, err
 			}
 		}
 	}

@@ -365,7 +365,8 @@
       "deleteBucketSuccess": "Kolumna została pomyślnie usunięta.",
       "bucketTitleSavedSuccess": "Tytuł kolumny został pomyślnie zapisany.",
       "bucketLimitSavedSuccess": "Limit kolumny został pomyślnie zapisany.",
-      "collapse": "Zwiń tę kolumnę"
+      "collapse": "Zwiń tę kolumnę",
+      "bucketLimitReached": "You have reached the bucket limit. Remove tasks or increase the limit to add new tasks."
     },
     "pseudo": {
       "favorites": {
@@ -1202,7 +1203,8 @@
     "12001": "Typ subskrypcji jest nieprawidłowy.",
     "12002": "Subskrybujesz już tę jednostkę lub jej jednostkę nadrzędną.",
     "13001": "Ten udostępniony link wymaga hasła do uwierzytelnienia, ale nie został podany.",
-    "13002": "Podane hasło udostępnionego linku było nieprawidłowe."
+    "13002": "Podane hasło udostępnionego linku było nieprawidłowe.",
+    "14001": "The provided file is not a valid zip file."
   },
   "about": {
     "title": "O aplikacji",

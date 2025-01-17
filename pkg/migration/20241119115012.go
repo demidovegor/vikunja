@@ -21,64 +21,66 @@ import (
 	"xorm.io/xorm"
 )
 
-type projectView20240919130957BucketConfiguration struct {
+type projectView20241119115012BucketConfiguration struct {
 	Title  string `json:"title"`
 	Filter string `json:"filter"`
 }
 
-type projectView20240919130957Lowercase struct {
+type projectView20241119115012 struct {
 	ID                  int64                                           `xorm:"autoincr not null unique pk" json:"id" param:"view"`
-	BucketConfiguration []*projectView20240919130957BucketConfiguration `xorm:"json" json:"bucket_configuration"`
+	BucketConfiguration []*projectView20241119115012BucketConfiguration `xorm:"json" json:"bucket_configuration"`
 }
 
-func (projectView20240919130957Lowercase) TableName() string {
+func (projectView20241119115012) TableName() string {
 	return "project_views"
 }
 
-type projectView20240919130957TitleCase struct {
-	ID                  int64 `xorm:"autoincr not null unique pk" json:"id" param:"view"`
-	BucketConfiguration []*struct {
-		Title  string `json:"Title"`
-		Filter string `json:"Filter"`
-	} `xorm:"json" json:"bucket_configuration"`
+type projectView20241119115012BucketConfigurationNew struct {
+	Title  string                        `json:"title"`
+	Filter *taskCollection20241118123644 `json:"filter"`
 }
 
-func (projectView20240919130957TitleCase) TableName() string {
+type projectView20241119115012New struct {
+	ID                  int64                                              `xorm:"autoincr not null unique pk" json:"id" param:"view"`
+	BucketConfiguration []*projectView20241119115012BucketConfigurationNew `xorm:"json" json:"bucket_configuration"`
+}
+
+func (projectView20241119115012New) TableName() string {
 	return "project_views"
 }
 
 func init() {
 	migrations = append(migrations, &xormigrate.Migration{
-		ID:          "20240919130957",
-		Description: "",
+		ID:          "20241119115012",
+		Description: "change bucket filter format",
 		Migrate: func(tx *xorm.Engine) (err error) {
-			oldViews := []*projectView20240919130957TitleCase{}
-			// 1 is manual
-			err = tx.Where("bucket_configuration_mode != 1 AND view_kind = 3").Find(&oldViews)
+			oldViews := []*projectView20241119115012{}
+
+			err = tx.Where("bucket_configuration_mode = 2").Find(&oldViews)
 			if err != nil {
 				return
 			}
 
-			if len(oldViews) == 0 {
-				return nil
+			err = tx.Sync(projectView20241119115012New{})
+			if err != nil {
+				return
 			}
 
 			for _, view := range oldViews {
-				newView := &projectView20240919130957Lowercase{
-					ID:                  view.ID,
-					BucketConfiguration: make([]*projectView20240919130957BucketConfiguration, 0),
+				newView := &projectView20241119115012New{
+					ID: view.ID,
 				}
 
-				for _, bc := range view.BucketConfiguration {
-					newView.BucketConfiguration = append(newView.BucketConfiguration, &projectView20240919130957BucketConfiguration{
-						Filter: bc.Filter,
-						Title:  bc.Title,
+				for _, configuration := range view.BucketConfiguration {
+					newView.BucketConfiguration = append(newView.BucketConfiguration, &projectView20241119115012BucketConfigurationNew{
+						Title: configuration.Title,
+						Filter: &taskCollection20241118123644{
+							Filter: configuration.Filter,
+						},
 					})
 				}
-				_, err = tx.
-					Where("id = ?", view.ID).
-					Cols("id", "bucket_configuration").
-					Update(newView)
+
+				_, err = tx.Where("id = ?", view.ID).Update(newView)
 				if err != nil {
 					return
 				}

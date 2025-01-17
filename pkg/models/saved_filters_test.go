@@ -38,42 +38,64 @@ func TestSavedFilter_getProjectIDFromFilter(t *testing.T) {
 
 func TestSavedFilter_getFilterIDFromProjectID(t *testing.T) {
 	t.Run("normal", func(t *testing.T) {
-		assert.Equal(t, int64(1), getSavedFilterIDFromProjectID(-2))
+		assert.Equal(t, int64(1), GetSavedFilterIDFromProjectID(-2))
 	})
 	t.Run("invalid", func(t *testing.T) {
-		assert.Equal(t, int64(0), getSavedFilterIDFromProjectID(2))
+		assert.Equal(t, int64(0), GetSavedFilterIDFromProjectID(2))
 	})
 }
 
 func TestSavedFilter_Create(t *testing.T) {
-	db.LoadAndAssertFixtures(t)
-	s := db.NewSession()
-	defer s.Close()
+	t.Run("empty filter", func(t *testing.T) {
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
 
-	sf := &SavedFilter{
-		Title:       "test",
-		Description: "Lorem Ipsum dolor sit amet",
-		Filters:     &TaskCollection{}, // Empty filter
-	}
+		sf := &SavedFilter{
+			Title:       "test",
+			Description: "Lorem Ipsum dolor sit amet",
+			Filters:     &TaskCollection{}, // Empty filter
+		}
 
-	u := &user.User{ID: 1}
-	err := sf.Create(s, u)
-	require.NoError(t, err)
-	assert.Equal(t, u.ID, sf.OwnerID)
-	err = s.Commit()
-	require.NoError(t, err)
-	vals := map[string]interface{}{
-		"title":       "'test'",
-		"description": "'Lorem Ipsum dolor sit amet'",
-		"filters":     "'{\"sort_by\":null,\"order_by\":null,\"filter\":\"\",\"filter_include_nulls\":false}'",
-		"owner_id":    1,
-	}
-	// Postgres can't compare json values directly, see https://dba.stackexchange.com/a/106290/210721
-	if db.Type() == schemas.POSTGRES {
-		vals["filters::jsonb"] = vals["filters"].(string) + "::jsonb"
-		delete(vals, "filters")
-	}
-	db.AssertExists(t, "saved_filters", vals, true)
+		u := &user.User{ID: 1}
+		err := sf.Create(s, u)
+		require.NoError(t, err)
+		assert.Equal(t, u.ID, sf.OwnerID)
+		err = s.Commit()
+		require.NoError(t, err)
+		vals := map[string]interface{}{
+			"title":       "'test'",
+			"description": "'Lorem Ipsum dolor sit amet'",
+			"filters":     `'{"s":"","sort_by":null,"order_by":null,"filter":"","filter_include_nulls":false}'`,
+			"owner_id":    1,
+		}
+		// Postgres can't compare json values directly, see https://dba.stackexchange.com/a/106290/210721
+		if db.Type() == schemas.POSTGRES {
+			vals["filters::jsonb"] = vals["filters"].(string) + "::jsonb"
+			delete(vals, "filters")
+		}
+		db.AssertExists(t, "saved_filters", vals, true)
+	})
+	t.Run("invalid filter string", func(t *testing.T) {
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
+
+		sf := &SavedFilter{
+			Title:       "test",
+			Description: "Lorem Ipsum dolor sit amet",
+			Filters: &TaskCollection{
+				Filter: "foo = value",
+			},
+		}
+
+		u := &user.User{ID: 1}
+		err := sf.Create(s, u)
+		require.Error(t, err)
+		db.AssertMissing(t, "saved_filters", map[string]interface{}{
+			"title": "test",
+		})
+	})
 }
 
 func TestSavedFilter_ReadOne(t *testing.T) {
@@ -133,6 +155,22 @@ func TestSavedFilter_Update(t *testing.T) {
 			"id":          1,
 			"is_favorite": true,
 		}, false)
+	})
+	t.Run("invalid filter string", func(t *testing.T) {
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
+
+		sf := &SavedFilter{
+			ID:          1,
+			Title:       "NewTitle",
+			Description: "", // Explicitly reset the description
+			Filters: &TaskCollection{
+				Filter: "foo = bar",
+			},
+		}
+		err := sf.Update(s, &user.User{ID: 1})
+		require.Error(t, err)
 	})
 }
 

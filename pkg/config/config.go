@@ -421,7 +421,10 @@ func InitDefaultConfig() {
 	AutoTLSRenewBefore.setDefault("720h") // 30days in hours
 }
 
-func getConfigValueFromFile(configKey string) string {
+func GetConfigValueFromFile(configKey string) string {
+	if !strings.HasSuffix(configKey, ".file") {
+		configKey += ".file"
+	}
 	var valuePath = viper.GetString(configKey)
 	if valuePath == "" {
 		return ""
@@ -433,26 +436,22 @@ func getConfigValueFromFile(configKey string) string {
 
 	contents, err := os.ReadFile(valuePath)
 	if err == nil {
-		return string(contents)
+		return strings.Trim(string(contents), "\n")
 	}
 
 	log.Fatalf("Failed to read the config file at %s for key %s: %v", valuePath, configKey, err)
 	return ""
 }
 
-func readConfigvaluesFromFiles() {
+func readConfigValuesFromFiles() {
 	keys := viper.AllKeys()
 	for _, key := range keys {
-		if strings.HasSuffix(key, "_file") {
-			value := getConfigValueFromFile(key)
-			if value != "" {
-				viper.Set(strings.TrimSuffix(key, "_file"), value)
-			}
+		if strings.Contains(key, "auth.openid.providers") {
+			// Setting openid provider values will remove everything but the value from file
 			continue
 		}
-
 		// Env is evaluated manually at runtime, so we need to check this for each key
-		value := getConfigValueFromFile(key + ".file")
+		value := GetConfigValueFromFile(key)
 		if value != "" {
 			viper.Set(strings.TrimSuffix(key, ".file"), value)
 		}
@@ -503,7 +502,7 @@ func InitConfig() {
 		log.Info("No config file found, using default or config from environment variables.")
 	}
 
-	readConfigvaluesFromFiles()
+	readConfigValuesFromFiles()
 
 	if RateLimitStore.GetString() == "keyvalue" {
 		RateLimitStore.Set(KeyvalueType.GetString())

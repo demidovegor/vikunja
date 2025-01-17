@@ -64,7 +64,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.Token"
+                            "$ref": "#/definitions/code_vikunja_io_api_pkg_modules_auth.Token"
                         }
                     },
                     "500": {
@@ -741,7 +741,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.Token"
+                            "$ref": "#/definitions/code_vikunja_io_api_pkg_modules_auth.Token"
                         }
                     },
                     "400": {
@@ -3923,7 +3923,7 @@ const docTemplate = `{
                     "200": {
                         "description": "The valid jwt auth token.",
                         "schema": {
-                            "$ref": "#/definitions/auth.Token"
+                            "$ref": "#/definitions/code_vikunja_io_api_pkg_modules_auth.Token"
                         }
                     },
                     "400": {
@@ -7360,7 +7360,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.Token"
+                            "$ref": "#/definitions/code_vikunja_io_api_pkg_modules_auth.Token"
                         }
                     },
                     "400": {
@@ -7696,15 +7696,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.Token": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-                }
-            }
-        },
         "background.Image": {
             "type": "object",
             "properties": {
@@ -7722,6 +7713,15 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "code_vikunja_io_api_pkg_modules_auth.Token": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                 }
             }
         },
@@ -8395,7 +8395,11 @@ const docTemplate = `{
                 },
                 "filter": {
                     "description": "The filter query to match tasks by. Check out https://vikunja.io/docs/filters for a full explanation.",
-                    "type": "string"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.TaskCollection"
+                        }
+                    ]
                 },
                 "id": {
                     "description": "The unique numeric id of this view",
@@ -8431,7 +8435,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "filter": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.TaskCollection"
                 },
                 "title": {
                     "type": "string"
@@ -8864,6 +8868,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "s": {
+                    "type": "string"
                 },
                 "sort_by": {
                     "description": "The query parameter to sort by. This is for ex. done, priority, etc.",

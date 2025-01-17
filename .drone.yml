@@ -363,7 +363,7 @@ steps:
       - api-build
 
   - name: frontend-dependencies
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     environment:
       PNPM_CACHE_FOLDER: .cache/pnpm
@@ -377,7 +377,7 @@ steps:
   #      - restore-cache
 
   - name: frontend-lint
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     environment:
       PNPM_CACHE_FOLDER: .cache/pnpm
@@ -389,7 +389,7 @@ steps:
       - frontend-dependencies
 
   - name: frontend-build-prod
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     environment:
       PNPM_CACHE_FOLDER: .cache/pnpm
@@ -401,7 +401,7 @@ steps:
       - frontend-dependencies
 
   - name: frontend-test-unit
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     commands:
       - cd frontend
@@ -412,7 +412,7 @@ steps:
 
   - name: frontend-typecheck
     failure: ignore
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     environment:
       PNPM_CACHE_FOLDER: .cache/pnpm
@@ -543,7 +543,7 @@ steps:
       - git fetch --tags
 
   - name: frontend-dependencies
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     environment:
       PNPM_CACHE_FOLDER: .cache/pnpm
@@ -555,7 +555,7 @@ steps:
       - pnpm install --fetch-timeout 100000
 
   - name: frontend-build
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     environment:
       PNPM_CACHE_FOLDER: .cache/pnpm
@@ -626,7 +626,7 @@ steps:
     depends_on: [ generate-config-yaml ]
 
   - name: before-static-build
-    image: techknowlogick/xgo:go-1.23.x
+    image: ghcr.io/techknowlogick/xgo:go-1.23.x
     pull: always
     commands:
       - export PATH=$PATH:$GOPATH/bin
@@ -635,7 +635,7 @@ steps:
     depends_on: [ fetch-tags, mage ]
 
   - name: static-build-windows
-    image: techknowlogick/xgo:go-1.23.x
+    image: ghcr.io/techknowlogick/xgo:go-1.23.x
     pull: always
     environment:
       # This path does not exist. However, when we set the gopath to /go, the build fails. Not sure why.
@@ -651,7 +651,7 @@ steps:
       - frontend-build
 
   - name: static-build-linux
-    image: techknowlogick/xgo:go-1.23.x
+    image: ghcr.io/techknowlogick/xgo:go-1.23.x
     pull: always
     environment:
       # This path does not exist. However, when we set the gopath to /go, the build fails. Not sure why.
@@ -667,7 +667,7 @@ steps:
       - frontend-build
 
   - name: static-build-darwin
-    image: techknowlogick/xgo:go-1.23.x
+    image: ghcr.io/techknowlogick/xgo:go-1.23.x
     pull: always
     environment:
       # This path does not exist. However, when we set the gopath to /go, the build fails. Not sure why.
@@ -693,7 +693,7 @@ steps:
       - ./mage-static release:compress
 
   - name: after-build-static
-    image: techknowlogick/xgo:go-1.23.x
+    image: ghcr.io/techknowlogick/xgo:go-1.23.x
     pull: always
     depends_on:
       - after-build-compress
@@ -763,7 +763,7 @@ steps:
 
   # Build os packages and push it to our bucket
   - name: build-os-packages-unstable
-    image: goreleaser/nfpm:v2.41.0
+    image: goreleaser/nfpm:v2.41.2
     pull: always
     commands:
       - apk add git go
@@ -779,7 +779,7 @@ steps:
     depends_on: [ after-build-compress ]
 
   - name: build-os-packages-version
-    image: goreleaser/nfpm:v2.41.0
+    image: goreleaser/nfpm:v2.41.2
     pull: always
     commands:
       - apk add git go
@@ -884,7 +884,6 @@ steps:
       repo: vikunja/vikunja
       tags: unstable
       platforms:
-        - linux/386
         - linux/amd64
         - linux/arm/v6
         - linux/arm/v7
@@ -916,7 +915,6 @@ steps:
         from_secret: docker_password
       repo: vikunja/vikunja
       platforms:
-        - linux/386
         - linux/amd64
         - linux/arm/v6
         - linux/arm/v7
@@ -948,7 +946,7 @@ steps:
       - git fetch --tags
 
   - name: build
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     environment:
       PNPM_CACHE_FOLDER: .cache/pnpm
@@ -1009,7 +1007,7 @@ steps:
       - git fetch --tags
 
   - name: build
-    image: node:22.11.0-alpine
+    image: node:22.13.0-alpine
     pull: always
     environment:
       PNPM_CACHE_FOLDER: .cache/pnpm
@@ -1400,6 +1398,6 @@ steps:
         - failure
 ---
 kind: signature
-hmac: 14968b058e6d28fa78d2329672bb46b401822543171ca4bf524ec5f7ed7fa443
+hmac: 298674d9b9d8618eef47969038fd4d7516112ecbd8a4d899ec3751d997a34ce4
 
 ...

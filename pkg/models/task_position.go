@@ -99,7 +99,7 @@ func (tp *TaskPosition) Update(s *xorm.Session, a web.Auth) (err error) {
 	}
 
 	_, err = s.
-		Where("task_id = ?", tp.TaskID).
+		Where("task_id = ? AND project_view_id = ?", tp.TaskID, tp.ProjectViewID).
 		Cols("project_view_id", "position").
 		Update(tp)
 	if err != nil {
@@ -137,6 +137,19 @@ func RecalculateTaskPositions(s *xorm.Session, view *ProjectView, a web.Auth) (e
 	}
 	if view.ProjectID < -1 {
 		tc.ProjectID = 0
+
+		sf, err := GetSavedFilterSimpleByID(s, GetSavedFilterIDFromProjectID(view.ProjectID))
+		if err != nil {
+			return err
+		}
+
+		opts.filterIncludeNulls = sf.Filters.FilterIncludeNulls
+		opts.filterTimezone = sf.Filters.FilterTimezone
+		opts.filter = sf.Filters.Filter
+		opts.parsedFilters, err = getTaskFiltersFromFilterString(opts.filter, opts.filterTimezone)
+		if err != nil {
+			return err
+		}
 	}
 
 	projects, err := getRelevantProjectsFromCollection(s, a, tc)

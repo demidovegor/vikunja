@@ -2,23 +2,23 @@
 import type {IUser} from '@/modelTypes/IUser'
 import BaseButton from '@/components/base/BaseButton.vue'
 import User from '@/components/misc/User.vue'
-import {computed} from 'vue'
 
-const {
-	assignees,
-	remove,
-	disabled,
-	avatarSize = 30,
-	inline = false,
-} = defineProps<{
+withDefaults(defineProps<{
 	assignees: IUser[],
-	remove?: (user: IUser) => void,
 	disabled?: boolean,
 	avatarSize?: number,
 	inline?: boolean,
-}>()
+	/** add this boolean prop to enable removal of assignees */
+	canRemove?: boolean,
+}>(), {
+	avatarSize: 30,
+	inline: false,
+	canRemove: false,
+})
 
-const hasDelete = computed(() => typeof remove !== 'undefined' && !disabled)
+defineEmits<{
+	remove: [user: IUser],
+}>()
 </script>
 
 <template>
@@ -36,13 +36,13 @@ const hasDelete = computed(() => typeof remove !== 'undefined' && !disabled)
 				:avatar-size="avatarSize"
 				:show-username="false"
 				:user="user"
-				:class="{'m-2': hasDelete}"
+				:class="{'m-2': canRemove && !disabled}"
 			/>
 			<BaseButton
-				v-if="hasDelete"
+				v-if="canRemove && !disabled"
 				:key="'delete'+user.id"
 				class="remove-assignee"
-				@click="remove(user)"
+				@click="$emit('remove', user)"
 			>
 				<Icon icon="times" />
 			</BaseButton>

@@ -365,7 +365,8 @@
       "deleteBucketSuccess": "El contenedor se ha eliminado con éxito.",
       "bucketTitleSavedSuccess": "El título del contenedor se ha guardado con éxito.",
       "bucketLimitSavedSuccess": "El límite del contenedor se ha guardado con éxito.",
-      "collapse": "Contraer este contenedor"
+      "collapse": "Contraer este contenedor",
+      "bucketLimitReached": "You have reached the bucket limit. Remove tasks or increase the limit to add new tasks."
     },
     "pseudo": {
       "favorites": {
@@ -1202,7 +1203,8 @@
     "12001": "El tipo de entidad de suscripción es inválido.",
     "12002": "Ya está suscrito a la entidad en sí misma o a una entidad padre.",
     "13001": "Este enlace compartido requiere una contraseña para la autenticación, pero no se ha proporcionado ninguna.",
-    "13002": "La contraseña proporcionada del enlace compartido no es válida."
+    "13002": "La contraseña proporcionada del enlace compartido no es válida.",
+    "14001": "The provided file is not a valid zip file."
   },
   "about": {
     "title": "Acerca de",

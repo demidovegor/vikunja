@@ -51,11 +51,11 @@
     }
   },
   "devDependencies": {
-    "electron": "33.0.2",
+    "electron": "34.0.0",
     "electron-builder": "25.1.8"
   },
   "dependencies": {
     "connect-history-api-fallback": "2.0.0",
-    "express": "4.21.1"
+    "express": "4.21.2"
   }
 }

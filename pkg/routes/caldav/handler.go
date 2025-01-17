@@ -172,7 +172,7 @@ func EntryHandler(c echo.Context) error {
 func getProjectFromParam(c echo.Context) (project *models.ProjectWithTasksAndBuckets, err error) {
 	param := c.Param("project")
 	if param == "" {
-		return nil, echo.ErrBadRequest
+		return &models.ProjectWithTasksAndBuckets{}, nil
 	}
 
 	s := db.NewSession()
@@ -181,6 +181,21 @@ func getProjectFromParam(c echo.Context) (project *models.ProjectWithTasksAndBuc
 	intParam, err := strconv.ParseInt(param, 10, 64)
 	if err != nil {
 		return nil, err
+	}
+
+	if intParam == models.FavoritesPseudoProjectID {
+		return &models.ProjectWithTasksAndBuckets{Project: models.FavoritesPseudoProject}, nil
+	}
+
+	if intParam < models.FavoritesPseudoProjectID {
+		var sf *models.SavedFilter
+		sf, err = models.GetSavedFilterSimpleByID(s, models.GetSavedFilterIDFromProjectID(intParam))
+		if err != nil {
+			return nil, err
+		}
+
+		project = &models.ProjectWithTasksAndBuckets{Project: *sf.ToProject()}
+		return
 	}
 
 	p, err := models.GetProjectSimpleByID(s, intParam)

@@ -100,6 +100,12 @@ func getRouteDetail(route echo.Route) (method string, detail *RouteDetail) {
 	}
 }
 
+func ensureAPITokenRoutesGroup(group string) {
+	if _, has := apiTokenRoutes[group]; !has {
+		apiTokenRoutes[group] = make(APITokenRoute)
+	}
+}
+
 // CollectRoutesForAPITokenUsage gets called for every added APITokenRoute and builds a list of all routes we can use for the api tokens.
 func CollectRoutesForAPITokenUsage(route echo.Route, middlewares []echo.MiddlewareFunc) {
 
@@ -139,9 +145,14 @@ func CollectRoutesForAPITokenUsage(route echo.Route, middlewares []echo.Middlewa
 		// and if that's the case, add it to its parent instead.
 		// Otherwise, we add it to the "other" key.
 		if len(routeParts) == 1 {
-			if _, has := apiTokenRoutes["other"]; !has {
-				apiTokenRoutes["other"] = make(APITokenRoute)
+			if routeGroupName == "notifications" && route.Method == http.MethodPost {
+				ensureAPITokenRoutesGroup("notifications")
+
+				apiTokenRoutes["notifications"]["mark_all_as_read"] = routeDetail
+				return
 			}
+
+			ensureAPITokenRoutesGroup("other")
 
 			_, exists := apiTokenRoutes["other"][routeGroupName]
 			if exists {
@@ -168,10 +179,7 @@ func CollectRoutesForAPITokenUsage(route echo.Route, middlewares []echo.Middlewa
 
 	if strings.HasSuffix(routeGroupName, "_bulk") {
 		parent := strings.TrimSuffix(routeGroupName, "_bulk")
-		_, has := apiTokenRoutes[parent]
-		if !has {
-			apiTokenRoutes[parent] = make(APITokenRoute)
-		}
+		ensureAPITokenRoutesGroup(parent)
 
 		method, routeDetail := getRouteDetail(route)
 		apiTokenRoutes[parent][method+"_bulk"] = routeDetail
@@ -202,6 +210,7 @@ func CollectRoutesForAPITokenUsage(route echo.Route, middlewares []echo.Middlewa
 			}
 		}
 	}
+
 }
 
 // GetAvailableAPIRoutesForToken returns a list of all API routes which are available for token usage.
@@ -229,7 +238,9 @@ func CanDoAPIRoute(c echo.Context, token *APIToken) (can bool) {
 
 	routeGroupName = strings.TrimSuffix(routeGroupName, "_bulk")
 
-	if routeGroupName == "user" {
+	if routeGroupName == "user" ||
+		routeGroupName == "users" ||
+		routeGroupName == "routes" {
 		routeGroupName = "other"
 	}
 

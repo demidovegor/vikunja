@@ -136,7 +136,7 @@ var FavoritesPseudoProject = Project{
 			Title:     "List",
 			ViewKind:  ProjectViewKindList,
 			Position:  100,
-			Filter:    "done = false",
+			Filter:    &TaskCollection{Filter: "done = false"},
 		},
 		{
 			ID:        -2,
@@ -265,10 +265,10 @@ func (p *Project) ReadOne(s *xorm.Session, a web.Auth) (err error) {
 	}
 
 	// Check for saved filters
-	filterID := getSavedFilterIDFromProjectID(p.ID)
+	filterID := GetSavedFilterIDFromProjectID(p.ID)
 	isFilter := filterID > 0
 	if isFilter {
-		sf, err := getSavedFilterSimpleByID(s, filterID)
+		sf, err := GetSavedFilterSimpleByID(s, filterID)
 		if err != nil {
 			return err
 		}
@@ -351,8 +351,8 @@ func getProjectSimple(s *xorm.Session, cond builder.Cond) (project *Project, exi
 	return
 }
 
-// GetProjectSimplByTaskID gets a project by a task id
-func GetProjectSimplByTaskID(s *xorm.Session, taskID int64) (l *Project, err error) {
+// GetProjectSimpleByTaskID gets a project by a task id
+func GetProjectSimpleByTaskID(s *xorm.Session, taskID int64) (l *Project, err error) {
 	// We need to re-init our project object, because otherwise xorm creates a "where for every item in that project object,
 	// leading to not finding anything if the id is good, but for example the title is different.
 	var project Project
@@ -373,8 +373,8 @@ func GetProjectSimplByTaskID(s *xorm.Session, taskID int64) (l *Project, err err
 	return &project, nil
 }
 
-// GetProjectsMapSimplByTaskIDs gets a list of projects by a task ids
-func GetProjectsMapSimplByTaskIDs(s *xorm.Session, taskIDs []int64) (ps map[int64]*Project, err error) {
+// GetProjectsMapSimpleByTaskIDs gets a list of projects by a task ids
+func GetProjectsMapSimpleByTaskIDs(s *xorm.Session, taskIDs []int64) (ps map[int64]*Project, err error) {
 	ps = make(map[int64]*Project)
 	err = s.
 		Select("projects.*").
@@ -385,7 +385,7 @@ func GetProjectsMapSimplByTaskIDs(s *xorm.Session, taskIDs []int64) (ps map[int6
 	return
 }
 
-func GetProjectsSimplByTaskIDs(s *xorm.Session, taskIDs []int64) (ps []*Project, err error) {
+func GetProjectsSimpleByTaskIDs(s *xorm.Session, taskIDs []int64) (ps []*Project, err error) {
 	err = s.
 		Select("projects.*").
 		Table(Project{}).
@@ -591,7 +591,7 @@ func getSavedFilterProjects(s *xorm.Session, doer *user.User) (savedFiltersProje
 	}
 
 	for _, filter := range savedFilters {
-		filterProject := filter.toProject()
+		filterProject := filter.ToProject()
 		filterProject.Owner = doer
 		savedFiltersProjects = append(savedFiltersProjects, filterProject)
 	}
@@ -735,7 +735,7 @@ func addProjectDetails(s *xorm.Session, projects []*Project, a web.Auth) (err er
 func addMaxRightToProjects(s *xorm.Session, projects []*Project, u *user.User) (err error) {
 	projectIDs := make([]int64, 0, len(projects))
 	for _, project := range projects {
-		if getSavedFilterIDFromProjectID(project.ID) > 0 {
+		if GetSavedFilterIDFromProjectID(project.ID) > 0 {
 			project.MaxRight = RightAdmin
 			continue
 		}
@@ -1039,9 +1039,9 @@ func recalculateProjectPositions(s *xorm.Session, parentProjectID int64) (err er
 // @Failure 500 {object} models.Message "Internal error"
 // @Router /projects/{id} [post]
 func (p *Project) Update(s *xorm.Session, a web.Auth) (err error) {
-	fid := getSavedFilterIDFromProjectID(p.ID)
+	fid := GetSavedFilterIDFromProjectID(p.ID)
 	if fid > 0 {
-		f, err := getSavedFilterSimpleByID(s, fid)
+		f, err := GetSavedFilterSimpleByID(s, fid)
 		if err != nil {
 			return err
 		}
@@ -1054,7 +1054,7 @@ func (p *Project) Update(s *xorm.Session, a web.Auth) (err error) {
 			return err
 		}
 
-		*p = *f.toProject()
+		*p = *f.ToProject()
 		return nil
 	}
 

@@ -16,8 +16,9 @@
 		<template #items="{items}">
 			<AssigneeList
 				:assignees="items"
-				:remove="removeAssignee"
 				:disabled="disabled"
+				can-remove
+				@remove="removeAssignee"
 			/>
 		</template>
 		<template #searchResult="{option: user}">

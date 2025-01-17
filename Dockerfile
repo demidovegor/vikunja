@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM --platform=$BUILDPLATFORM node:22.11.0-alpine AS frontendbuilder
+FROM --platform=$BUILDPLATFORM node:22.13.0-alpine AS frontendbuilder
 
 WORKDIR /build
 
@@ -13,7 +13,7 @@ RUN corepack enable && \
       pnpm install && \
       pnpm run build
 
-FROM --platform=$BUILDPLATFORM techknowlogick/xgo:go-1.23.x AS apibuilder
+FROM --platform=$BUILDPLATFORM ghcr.io/techknowlogick/xgo:go-1.23.x AS apibuilder
 
 RUN go install github.com/magefile/mage@latest && \
     mv /go/bin/mage /usr/local/go/bin

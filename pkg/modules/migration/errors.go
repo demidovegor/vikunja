@@ -14,40 +14,29 @@
 // You should have received a copy of the GNU Affero General Public Licensee
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package user
+package migration
 
 import (
-	"strings"
+	"net/http"
 
-	"github.com/asaskevich/govalidator"
+	"code.vikunja.io/api/pkg/web"
 )
 
-func init() {
-	govalidator.TagMap["username"] = func(i string) bool {
-		// To avoid making this overly complicated, we only check three things:
-		// 1. No Spaces
-		// 2. Should not look like an url
-		// 3. Should not contain , (because then it will be impossible to search for)
-		if govalidator.HasWhitespace(i) {
-			return false
-		}
+// ErrNotAZipFile represents a "ErrNotAZipFile" kind of error.
+type ErrNotAZipFile struct{}
 
-		if govalidator.IsURL(i) {
-			return false
-		}
+func (err *ErrNotAZipFile) Error() string {
+	return "The provided file is not a valid zip file"
+}
 
-		if strings.Contains(i, ",") {
-			return false
-		}
+// ErrCodeNotAZipFile holds the unique world-error code of this error
+const ErrCodeNotAZipFile = 14001
 
-		return true
-	}
-
-	govalidator.TagMap["bcrypt_password"] = func(str string) bool {
-		if len(str) < 8 {
-			return false
-		}
-
-		return len([]byte(str)) < 72
+// HTTPError holds the http error description
+func (err *ErrNotAZipFile) HTTPError() web.HTTPError {
+	return web.HTTPError{
+		HTTPCode: http.StatusBadRequest,
+		Code:     ErrCodeNotAZipFile,
+		Message:  "The provided file is not a valid zip file.",
 	}
 }

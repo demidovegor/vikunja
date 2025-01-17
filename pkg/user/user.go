@@ -186,7 +186,11 @@ func (u *User) GetFailedPasswordAttemptsKey() string {
 func GetFromAuth(a web.Auth) (*User, error) {
 	u, is := a.(*User)
 	if !is {
-		return &User{}, fmt.Errorf("user is not user element, is %s", reflect.TypeOf(a))
+		typ := reflect.TypeOf(a)
+		if typ.String() == "*models.LinkSharing" {
+			return nil, &ErrMustNotBeLinkShare{}
+		}
+		return &User{}, fmt.Errorf("user is not user element, is %s", typ)
 	}
 	return u, nil
 }
@@ -372,10 +376,23 @@ func handleFailedPassword(user *User) {
 
 	a, _, err := keyvalue.Get(key)
 	if err != nil {
-		log.Errorf("Could get failed password attempts for user %d: %s", user.ID, err)
+		log.Errorf("Could not get failed password attempts for user %d: %s", user.ID, err)
 		return
 	}
-	attempts := a.(int64)
+	attempts, ok := a.(int64)
+	if !ok {
+		attemptsStr, ok := a.(string)
+		if !ok {
+			log.Errorf("Unexpected type for failed password attempts: %v", a)
+			return
+		}
+		var err error
+		attempts, err = strconv.ParseInt(attemptsStr, 10, 64)
+		if err != nil {
+			log.Errorf("Could not convert failed password attempts to int64: %v, value: %s", err, attemptsStr)
+			return
+		}
+	}
 	if attempts != 3 {
 		return
 	}
@@ -429,16 +446,39 @@ func GetCurrentUser(c echo.Context) (user *User, err error) {
 func GetUserFromClaims(claims jwt.MapClaims) (user *User, err error) {
 	userID, ok := claims["id"].(float64)
 	if !ok {
-		return user, ErrCouldNotGetUserID{}
+		return user, &ErrInvalidClaimData{
+			Field: "id",
+			Type:  reflect.TypeOf(claims["id"]).String(),
+		}
 	}
-	user = &User{
-		ID:       int64(userID),
-		Email:    claims["email"].(string),
-		Username: claims["username"].(string),
-		Name:     claims["name"].(string),
+	email, ok := claims["email"].(string)
+	if !ok {
+		return nil, &ErrInvalidClaimData{
+			Field: "email",
+			Type:  reflect.TypeOf(claims["email"]).String(),
+		}
+	}
+	username, ok := claims["username"].(string)
+	if !ok {
+		return nil, &ErrInvalidClaimData{
+			Field: "username",
+			Type:  reflect.TypeOf(claims["username"]).String(),
+		}
+	}
+	name, ok := claims["name"].(string)
+	if !ok {
+		return nil, &ErrInvalidClaimData{
+			Field: "name",
+			Type:  reflect.TypeOf(claims["name"]).String(),
+		}
 	}
 
-	return
+	return &User{
+		ID:       int64(userID),
+		Email:    email,
+		Username: username,
+		Name:     name,
+	}, nil
 }
 
 // UpdateUser updates a user

@@ -365,7 +365,8 @@
       "deleteBucketSuccess": "O bucket foi excluído com sucesso.",
       "bucketTitleSavedSuccess": "O título do bucket foi salvo com sucesso.",
       "bucketLimitSavedSuccess": "O limite do bucket foi salvo com sucesso.",
-      "collapse": "Recolher este bucket"
+      "collapse": "Recolher este bucket",
+      "bucketLimitReached": "You have reached the bucket limit. Remove tasks or increase the limit to add new tasks."
     },
     "pseudo": {
       "favorites": {
@@ -1202,7 +1203,8 @@
     "12001": "A entidade de subscrição é inválida.",
     "12002": "Você já assinou a entidade em si ou uma entidade pai.",
     "13001": "Este link compartilhado requer uma senha para autenticação, mas nenhum foi fornecido.",
-    "13002": "A senha de compartilhamento do link fornecido é inválida."
+    "13002": "A senha de compartilhamento do link fornecido é inválida.",
+    "14001": "The provided file is not a valid zip file."
   },
   "about": {
     "title": "Sobre",

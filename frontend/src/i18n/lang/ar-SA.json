@@ -365,7 +365,8 @@
       "deleteBucketSuccess": "تم حذف الحافظة بنجاح.",
       "bucketTitleSavedSuccess": "تم حفظ عنوان الحافظة بنجاح.",
       "bucketLimitSavedSuccess": "تم حفظ الحد الأقصى للحافظة بنجاح.",
-      "collapse": "طي هذه الحافظة"
+      "collapse": "طي هذه الحافظة",
+      "bucketLimitReached": "You have reached the bucket limit. Remove tasks or increase the limit to add new tasks."
     },
     "pseudo": {
       "favorites": {
@@ -1202,7 +1203,8 @@
     "12001": "نوع الاشتراك غير صالح.",
     "12002": "أنت مشترك بالفعل في العنصر نفسه أو في العنصر الرئيس.",
     "13001": "رابط المشاركة هذا يتطلب كلمة مرور للتوثيق، ولكن لم يتم توفير أي منها.",
-    "13002": "كلمة مرور رابط المشاركة غير صالحة."
+    "13002": "كلمة مرور رابط المشاركة غير صالحة.",
+    "14001": "The provided file is not a valid zip file."
   },
   "about": {
     "title": "عن البرنامج",

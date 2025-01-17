@@ -1,5 +1,6 @@
 import type {IAbstract} from './IAbstract'
 import type {IProject} from '@/modelTypes/IProject'
+import type {IFilters} from '@/modelTypes/ISavedFilter'
 
 export const PROJECT_VIEW_KINDS = {
 	LIST: 'list',
@@ -20,7 +21,7 @@ export type ProjectViewBucketConfigurationMode = typeof PROJECT_VIEW_BUCKET_CONF
 
 export interface IProjectViewBucketConfiguration {
 	title: string
-	filter: string
+	filter: IFilters
 }
 
 export interface IProjectView extends IAbstract {
@@ -29,7 +30,7 @@ export interface IProjectView extends IAbstract {
 	projectId: IProject['id']
 	viewKind: ProjectViewKind
 
-	filter: string
+	filter: IFilters
 	position: number
 
 	bucketConfigurationMode: ProjectViewBucketConfigurationMode
