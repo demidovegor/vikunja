@@ -27,6 +27,7 @@ import (
 	"code.vikunja.io/api/pkg/mail"
 	"code.vikunja.io/api/pkg/migration"
 	"code.vikunja.io/api/pkg/models"
+	"code.vikunja.io/api/pkg/modules/auth/ldap"
 	"code.vikunja.io/api/pkg/modules/auth/openid"
 	"code.vikunja.io/api/pkg/modules/keyvalue"
 	migrationHandler "code.vikunja.io/api/pkg/modules/migration/handler"
@@ -79,6 +80,9 @@ func FullInitWithoutAsync() {
 
 	// Start the mail daemon
 	mail.StartMailDaemon()
+
+	// Connect to ldap if enabled
+	ldap.InitializeLDAPConnection()
 }
 
 // FullInit initializes all kinds of things in the right order

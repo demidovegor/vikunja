@@ -99,7 +99,8 @@
         "defaultView": "Default view",
         "timezone": "Time zone",
         "overdueTasksRemindersTime": "وقت تذكير للمهام المتأخرة بالبريد الإلكتروني",
-        "filterUsedOnOverview": "الفلتر المحفوظ والمستخدم في صفحة العرض العام"
+        "filterUsedOnOverview": "الفلتر المحفوظ والمستخدم في صفحة العرض العام",
+        "externalUserNameChange": "Your name is managed by your login provider ({provider}). To change it, please update it there instead."
       },
       "totp": {
         "title": "رمز المصادقة الثنائية 2FA",
@@ -210,7 +211,7 @@
     "archivedMessage": "تم أرشفة هذا المشروع. لا يمكن إنشاء مهام جديدة أو تعديلها.",
     "archived": "مؤرشفة",
     "showArchived": "إظهار المؤرشفة",
-    "title": "عنوان المشروع",
+    "title": "Title",
     "color": "اللون",
     "projects": "المشاريع",
     "parent": "المشروع الرئيس",
@@ -219,6 +220,10 @@
     "shared": "المشاريع المشتركة",
     "noDescriptionAvailable": "لا يوجد وصف للمشروع.",
     "inboxTitle": "الوارد",
+    "favorite": "Mark this project as favorite",
+    "unfavorite": "Remove this project from favorites",
+    "openSettingsMenu": "Open project settings menu",
+    "description": "Project description",
     "create": {
       "header": "مشروع جديد",
       "titlePlaceholder": "عنوان المشروع هنا…",
@@ -583,7 +588,8 @@
     "created": "تاريخ الإنشاء",
     "createdBy": "Created by {0}",
     "actions": "الإجراءات",
-    "cannotBeUndone": "لا يمكن التراجع عن هذا الإجراء!"
+    "cannotBeUndone": "لا يمكن التراجع عن هذا الإجراء!",
+    "avatarOfUser": "{user}'s profile image"
   },
   "input": {
     "resetColor": "إعادة تعيين اللون",

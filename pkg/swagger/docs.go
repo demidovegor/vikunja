@@ -2430,7 +2430,7 @@ const docTemplate = `{
                         "JWTKeyAuth": []
                     }
                 ],
-                "description": "Returns all tasks for the current project.",
+                "description": "Returns all tasks for the selected project. When the requested view is a kanban view, a list of buckets containing the tasks will be returned. Otherwise, a list of tasks will be returned.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2505,8 +2505,8 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "If set to ` + "`" + `subtasks` + "`" + `, Vikunja will fetch only tasks which do not have subtasks and then in a second step, will fetch all of these subtasks. This may result in more tasks than the pagination limit being returned, but all subtasks will be present in the response. You can only set this to ` + "`" + `subtasks` + "`" + `.",
+                        "type": "array",
+                        "description": "If set to ` + "`" + `subtasks` + "`" + `, Vikunja will fetch only tasks which do not have subtasks and then in a second step, will fetch all of these subtasks. This may result in more tasks than the pagination limit being returned, but all subtasks will be present in the response. If set to ` + "`" + `buckets` + "`" + `, the buckets of each task will be present in the response. If set to ` + "`" + `reactions` + "`" + `, the reactions of each task will be present in the response. If set to ` + "`" + `comments` + "`" + `, the first 50 comments of each task will be present in the response. You can set this multiple times with different values.",
                         "name": "expand",
                         "in": "query"
                     }
@@ -4131,8 +4131,8 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "If set to ` + "`" + `subtasks` + "`" + `, Vikunja will fetch only tasks which do not have subtasks and then in a second step, will fetch all of these subtasks. This may result in more tasks than the pagination limit being returned, but all subtasks will be present in the response. You can only set this to ` + "`" + `subtasks` + "`" + `.",
+                        "type": "array",
+                        "description": "If set to ` + "`" + `subtasks` + "`" + `, Vikunja will fetch only tasks which do not have subtasks and then in a second step, will fetch all of these subtasks. This may result in more tasks than the pagination limit being returned, but all subtasks will be present in the response. If set to ` + "`" + `buckets` + "`" + `, the buckets of each task will be present in the response. If set to ` + "`" + `reactions` + "`" + `, the reactions of each task will be present in the response. If set to ` + "`" + `comments` + "`" + `, the first 50 comments of each task will be present in the response. You can set this multiple times with different values.",
                         "name": "expand",
                         "in": "query"
                     }
@@ -4238,6 +4238,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "array",
+                        "description": "If set to ` + "`" + `subtasks` + "`" + `, Vikunja will fetch only tasks which do not have subtasks and then in a second step, will fetch all of these subtasks. This may result in more tasks than the pagination limit being returned, but all subtasks will be present in the response. If set to ` + "`" + `buckets` + "`" + `, the buckets of each task will be present in the response. If set to ` + "`" + `reactions` + "`" + `, the reactions of each task will be present in the response. If set to ` + "`" + `comments` + "`" + `, the first 50 comments of each task will be present in the response. You can set this multiple times with different values.",
+                        "name": "expand",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -7926,6 +7932,20 @@ const docTemplate = `{
                     "description": "The bucket id. Will only be populated when the task is accessed via a view with buckets.\nCan be used to move a task between buckets. In that case, the new bucket must be in the same view as the old one.",
                     "type": "integer"
                 },
+                "buckets": {
+                    "description": "All buckets across all views this task is part of. Only present when fetching tasks with the ` + "`" + `expand` + "`" + ` parameter set to ` + "`" + `buckets` + "`" + `.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Bucket"
+                    }
+                },
+                "comments": {
+                    "description": "All comments of this task. Only present when fetching tasks with the ` + "`" + `expand` + "`" + ` parameter set to ` + "`" + `comments` + "`" + `.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TaskComment"
+                    }
+                },
                 "cover_image_attachment_id": {
                     "description": "If this task has a cover image, the field will return the id of the attachment that is the cover image.",
                     "type": "integer"
@@ -8664,6 +8684,20 @@ const docTemplate = `{
                 "bucket_id": {
                     "description": "The bucket id. Will only be populated when the task is accessed via a view with buckets.\nCan be used to move a task between buckets. In that case, the new bucket must be in the same view as the old one.",
                     "type": "integer"
+                },
+                "buckets": {
+                    "description": "All buckets across all views this task is part of. Only present when fetching tasks with the ` + "`" + `expand` + "`" + ` parameter set to ` + "`" + `buckets` + "`" + `.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Bucket"
+                    }
+                },
+                "comments": {
+                    "description": "All comments of this task. Only present when fetching tasks with the ` + "`" + `expand` + "`" + ` parameter set to ` + "`" + `comments` + "`" + `.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TaskComment"
+                    }
                 },
                 "cover_image_attachment_id": {
                     "description": "If this task has a cover image, the field will return the id of the attachment that is the cover image.",
@@ -9601,6 +9635,9 @@ const docTemplate = `{
         "v1.UserWithSettings": {
             "type": "object",
             "properties": {
+                "auth_provider": {
+                    "type": "string"
+                },
                 "created": {
                     "description": "A timestamp when this task was created. You cannot change this value.",
                     "type": "string"
@@ -9642,11 +9679,22 @@ const docTemplate = `{
         "v1.authInfo": {
             "type": "object",
             "properties": {
+                "ldap": {
+                    "$ref": "#/definitions/v1.ldapAuthInfo"
+                },
                 "local": {
                     "$ref": "#/definitions/v1.localAuthInfo"
                 },
                 "openid_connect": {
                     "$ref": "#/definitions/v1.openIDAuthInfo"
+                }
+            }
+        },
+        "v1.ldapAuthInfo": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
                 }
             }
         },
@@ -9665,6 +9713,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "enabled": {
+                    "type": "boolean"
+                },
+                "registration_enabled": {
                     "type": "boolean"
                 }
             }
@@ -9726,9 +9777,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "public_teams_enabled": {
-                    "type": "boolean"
-                },
-                "registration_enabled": {
                     "type": "boolean"
                 },
                 "task_attachments_enabled": {

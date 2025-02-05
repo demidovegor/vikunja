@@ -35,6 +35,9 @@
 						height="48"
 						width="48"
 					>
+					<figcaption class="tw-sr-only">
+						{{ $t('misc.avatarOfUser', {user: getDisplayName(c.author)}) }}
+					</figcaption>
 				</figure>
 				<div class="media-content">
 					<div class="comment-info">
@@ -64,7 +67,10 @@
 							class="comment-permalink"
 							:title="$t('task.comment.permalink')"
 							@click.prevent.stop="copy(getCommentUrl(`${c.id}`))"
-						><Icon icon="link" /></a>
+						>
+							<span class="tw-sr-only">{{ $t('task.comment.permalink') }}</span>
+							<Icon icon="link" />
+						</a>
 						<CustomTransition name="fade">
 							<span
 								v-if="
@@ -136,6 +142,9 @@
 						height="48"
 						width="48"
 					>
+					<figcaption class="tw-sr-only">
+						{{ $t('misc.avatarOfUser', {user: getDisplayName(authStore.info)}) }}
+					</figcaption>
 				</figure>
 				<div class="media-content">
 					<div class="form">
@@ -151,14 +160,13 @@
 						<div class="field">
 							<Editor
 								v-if="editorActive"
-								v-model="newComment.comment"
+								v-model="newCommentText"
 								:class="{
 									'is-loading':
 										taskCommentService.loading &&
 										!isCommentEdit,
 								}"
 								:upload-callback="attachmentUpload"
-								:upload-enabled="true"
 								:placeholder="$t('task.comment.placeholder')"
 								@save="addComment()"
 							/>
@@ -166,7 +174,7 @@
 						<div class="field">
 							<x-button
 								:loading="taskCommentService.loading && !isCommentEdit"
-								:disabled="newComment.comment === ''"
+								:disabled="newCommentText === ''"
 								@click="addComment()"
 							>
 								{{ $t('task.comment.comment') }}
@@ -223,6 +231,7 @@ import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 const props = withDefaults(defineProps<{
 	taskId: number,
 	canWrite?: boolean
+	initialComments?: ITaskComment[]
 }>(), {
 	canWrite: true,
 })
@@ -241,7 +250,7 @@ const commentToDelete = reactive(new TaskCommentModel())
 const isCommentEdit = ref(false)
 const commentEdit = reactive(new TaskCommentModel())
 
-const newComment = reactive(new TaskCommentModel())
+const newCommentText = ref('')
 
 const saved = ref<ITask['id'] | null>(null)
 const saving = ref<ITask['id'] | null>(null)
@@ -292,9 +301,14 @@ async function loadComments(taskId: ITask['id']) {
 		return
 	}
 
-	newComment.taskId = taskId
 	commentEdit.taskId = taskId
 	commentToDelete.taskId = taskId
+	
+	if(typeof props.initialComments !== 'undefined' && currentPage.value === 1) {
+		comments.value = props.initialComments
+		return
+	}
+
 	comments.value = await taskCommentService.getAll({taskId}, {}, currentPage.value)
 }
 
@@ -317,7 +331,7 @@ const editorActive = ref(true)
 const creating = ref(false)
 
 async function addComment() {
-	if (newComment.comment === '') {
+	if (newCommentText.value === '') {
 		return
 	}
 
@@ -331,9 +345,12 @@ async function addComment() {
 	creating.value = true
 
 	try {
+		const newComment = new TaskCommentModel()
+		newComment.taskId = props.taskId
+		newComment.comment = newCommentText.value
 		const comment = await taskCommentService.create(newComment)
 		comments.value.push(comment)
-		newComment.comment = ''
+		newCommentText.value = ''
 		success({message: t('task.comment.addedSuccess')})
 	} finally {
 		creating.value = false

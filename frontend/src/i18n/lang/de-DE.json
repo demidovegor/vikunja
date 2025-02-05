@@ -99,7 +99,8 @@
         "defaultView": "Standardansicht",
         "timezone": "Zeitzone",
         "overdueTasksRemindersTime": "Zeit der E-Mail-Zusammenfassung der überfälligen Aufgaben",
-        "filterUsedOnOverview": "Gespeicherter Filter, der für die Startseite verwendet wird"
+        "filterUsedOnOverview": "Gespeicherter Filter, der für die Startseite verwendet wird",
+        "externalUserNameChange": "Dein Name wird von deinem Login-Provider verwaltet ({provider}). Um ihn zu ändern, aktualisiere ihn bitte dort."
       },
       "totp": {
         "title": "Zwei-Faktor-Authentifizierung",
@@ -210,7 +211,7 @@
     "archivedMessage": "Dieses Projekt ist archiviert. Es ist nicht möglich, neue Aufgaben zu erstellen oder es zu bearbeiten.",
     "archived": "Archiviert",
     "showArchived": "Archivierte anzeigen",
-    "title": "Projekttitel",
+    "title": "Titel",
     "color": "Farbe",
     "projects": "Projekte",
     "parent": "Übergeordnetes Projekt",
@@ -219,6 +220,10 @@
     "shared": "Geteilte Projekte",
     "noDescriptionAvailable": "Keine Projektbeschreibung verfügbar.",
     "inboxTitle": "Eingang",
+    "favorite": "Dieses Projekt als Favorit markieren",
+    "unfavorite": "Dieses Projekt von Favoriten entfernen",
+    "openSettingsMenu": "Projekteinstellungen öffnen",
+    "description": "Projektbeschreibung",
     "create": {
       "header": "Neues Projekt",
       "titlePlaceholder": "Der Titel des Projekts kommt hier hin…",
@@ -583,7 +588,8 @@
     "created": "Erstellt am",
     "createdBy": "Erstellt von {0}",
     "actions": "Aktionen",
-    "cannotBeUndone": "Dies kann nicht rückgängig gemacht werden!"
+    "cannotBeUndone": "Dies kann nicht rückgängig gemacht werden!",
+    "avatarOfUser": "{user}'s Profilbild"
   },
   "input": {
     "resetColor": "Farbe zurücksetzen",

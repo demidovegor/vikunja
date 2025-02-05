@@ -38,7 +38,6 @@ type vikunjaInfos struct {
 	Motd                       string    `json:"motd"`
 	LinkSharingEnabled         bool      `json:"link_sharing_enabled"`
 	MaxFileSize                string    `json:"max_file_size"`
-	RegistrationEnabled        bool      `json:"registration_enabled"`
 	AvailableMigrators         []string  `json:"available_migrators"`
 	TaskAttachmentsEnabled     bool      `json:"task_attachments_enabled"`
 	EnabledBackgroundProviders []string  `json:"enabled_background_providers"`
@@ -56,10 +55,16 @@ type vikunjaInfos struct {
 
 type authInfo struct {
 	Local         localAuthInfo  `json:"local"`
+	Ldap          ldapAuthInfo   `json:"ldap"`
 	OpenIDConnect openIDAuthInfo `json:"openid_connect"`
 }
 
 type localAuthInfo struct {
+	Enabled             bool `json:"enabled"`
+	RegistrationEnabled bool `json:"registration_enabled"`
+}
+
+type ldapAuthInfo struct {
 	Enabled bool `json:"enabled"`
 }
 
@@ -87,7 +92,6 @@ func Info(c echo.Context) error {
 		Motd:                   config.ServiceMotd.GetString(),
 		LinkSharingEnabled:     config.ServiceEnableLinkSharing.GetBool(),
 		MaxFileSize:            config.FilesMaxSize.GetString(),
-		RegistrationEnabled:    config.ServiceEnableRegistration.GetBool(),
 		TaskAttachmentsEnabled: config.ServiceEnableTaskAttachments.GetBool(),
 		TotpEnabled:            config.ServiceEnableTotp.GetBool(),
 		CaldavEnabled:          config.ServiceEnableCaldav.GetBool(),
@@ -107,7 +111,11 @@ func Info(c echo.Context) error {
 		},
 		AuthInfo: authInfo{
 			Local: localAuthInfo{
-				Enabled: config.AuthLocalEnabled.GetBool(),
+				Enabled:             config.AuthLocalEnabled.GetBool(),
+				RegistrationEnabled: config.AuthLocalEnabled.GetBool() && config.ServiceEnableRegistration.GetBool(),
+			},
+			Ldap: ldapAuthInfo{
+				Enabled: config.AuthLdapEnabled.GetBool(),
 			},
 			OpenIDConnect: openIDAuthInfo{
 				Enabled: config.AuthOpenIDEnabled.GetBool(),

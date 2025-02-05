@@ -29,24 +29,40 @@ const labelStore = useLabelStore()
 const projectStore = useProjectStore()
 
 onBeforeMount(() => {
-	const transformFilterToString = (filter: IFilter): string => {
-		if (filter.s !== '') {
-			return filter.s
-		}
-
-		return transformFilterStringFromApi(
-			filter.filter,
+	const transformFilterFromApi = (filterInput: IFilter): IFilter => {
+		const filterString = transformFilterStringFromApi(
+			filterInput.filter,
 			labelId => labelStore.getLabelById(labelId)?.title || null,
 			projectId => projectStore.projects[projectId]?.title || null,
 		)
+		
+		const filter: IFilter = {
+			filter: '',
+			s: '',
+		}
+		if (hasFilterQuery(filterString)) {
+			filter.filter = filterString
+		} else {
+			filter.s = filterString
+		}
+		
+		if (filter.s === '') {
+			filter.s = filterInput.s
+		}
+		
+		if (filter.filter === '') {
+			filter.filter = filter.s
+		}
+
+		return filter
 	}
 
 	const transformed = {
 		...props.modelValue,
-		filter: transformFilterToString(props.modelValue.filter),
+		filter: transformFilterFromApi(props.modelValue.filter),
 		bucketConfiguration: props.modelValue.bucketConfiguration.map(bc => ({
 			title: bc.title,
-			filter: transformFilterToString(bc.filter),
+			filter: transformFilterFromApi(bc.filter),
 		})),
 	}
 
@@ -77,10 +93,10 @@ function save() {
 
 	emit('update:modelValue', {
 		...view.value,
-		filter: transformFilterForApi(view.value?.filter || ''),
+		filter: transformFilterForApi(view.value?.filter?.filter || ''),
 		bucketConfiguration: view.value?.bucketConfiguration.map(bc => ({
 			title: bc.title,
-			filter: transformFilterForApi(bc.filter || ''),
+			filter: transformFilterForApi(bc.filter?.filter || ''),
 		})),
 	})
 }
@@ -158,7 +174,7 @@ function handleBubbleSave() {
 		</div>
 
 		<FilterInput
-			v-model="view.filter"
+			v-model="view.filter.filter"
 			:project-id="view.projectId"
 			:input-label="$t('project.views.filter')"
 			class="mb-1"
@@ -178,20 +194,28 @@ function handleBubbleSave() {
 			>
 				{{ $t('project.views.bucketConfigMode') }}
 			</label>
-			<div class="control">
-				<div class="select">
-					<select
-						id="configMode"
+			<div
+				id="configMode"
+				class="control"
+			>
+				<label class="radio">
+					<input
 						v-model="view.bucketConfigurationMode"
+						type="radio"
+						name="configMode"
+						value="manual"
 					>
-						<option value="manual">
-							{{ $t('project.views.bucketConfigManual') }}
-						</option>
-						<option value="filter">
-							{{ $t('project.views.filter') }}
-						</option>
-					</select>
-				</div>
+					{{ $t('project.views.bucketConfigManual') }}
+				</label>
+				<label class="radio">
+					<input
+						v-model="view.bucketConfigurationMode"
+						type="radio"
+						name="configMode"
+						value="filter"
+					>
+					{{ $t('project.views.filter') }}
+				</label>
 			</div>
 		</div>
 
@@ -233,7 +257,7 @@ function handleBubbleSave() {
 						</div>
 
 						<FilterInput
-							v-model="view.bucketConfiguration[index].filter"
+							v-model="view.bucketConfiguration[index].filter.filter"
 							:project-id="view.projectId"
 							:input-label="$t('project.views.filter')"
 							class="mb-2"

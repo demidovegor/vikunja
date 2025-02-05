@@ -56,14 +56,14 @@ import {useConfigStore} from '@/stores/config'
 withDefaults(defineProps<{
 	showApiConfig?: boolean
 }>(), {
-	showApiConfig: true,
+	showApiConfig: false,
 })
 const configStore = useConfigStore()
 const motd = computed(() => configStore.motd)
 
 const route = useRoute()
 const {t} = useI18n({useScope: 'global'})
-const title = computed(() => t(route.meta?.title as string || ''))
+const title = computed(() => route.meta?.title ? t(route.meta.title as string) : '')
 useTitle(() => title.value)
 
 </script>

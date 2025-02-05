@@ -99,7 +99,8 @@
         "defaultView": "Default view",
         "timezone": "Time zone",
         "overdueTasksRemindersTime": "逾期任务提醒邮件时间",
-        "filterUsedOnOverview": "概述页面上使用已保存过滤器"
+        "filterUsedOnOverview": "概述页面上使用已保存过滤器",
+        "externalUserNameChange": "Your name is managed by your login provider ({provider}). To change it, please update it there instead."
       },
       "totp": {
         "title": "两步验证",
@@ -210,7 +211,7 @@
     "archivedMessage": "该项目已存档。 无法为其创建新任务或编辑任务。",
     "archived": "已归档",
     "showArchived": "显示已归档",
-    "title": "项目标题",
+    "title": "Title",
     "color": "颜色",
     "projects": "项目",
     "parent": "父项目",
@@ -219,6 +220,10 @@
     "shared": "共享项目",
     "noDescriptionAvailable": "没有可用的项目描述。",
     "inboxTitle": "收件箱",
+    "favorite": "Mark this project as favorite",
+    "unfavorite": "Remove this project from favorites",
+    "openSettingsMenu": "Open project settings menu",
+    "description": "Project description",
     "create": {
       "header": "新项目",
       "titlePlaceholder": "项目标题",
@@ -583,7 +588,8 @@
     "created": "创建于",
     "createdBy": "由 {0} 创建",
     "actions": "行为",
-    "cannotBeUndone": "此操作无法撤消！"
+    "cannotBeUndone": "此操作无法撤消！",
+    "avatarOfUser": "{user}'s profile image"
   },
   "input": {
     "resetColor": "重置颜色",

@@ -7,6 +7,7 @@
 		<RouterLink
 			:to="{ name: 'home' }"
 			class="logo-link"
+			:aria-label="$t('navigation.overview')"
 		>
 			<Logo
 				width="164"
@@ -29,6 +30,7 @@
 				:to="{ name: 'project.info', params: { projectId: currentProject.id } }"
 				class="project-title-button"
 			>
+				<span class="tw-sr-only">{{ $t('project.description') }}</span>
 				<Icon icon="circle-info" />
 			</BaseButton>
 
@@ -42,6 +44,7 @@
 						class="project-title-button"
 						@click="toggleOpen"
 					>
+						<span class="tw-sr-only">{{ $t('project.openSettingsMenu') }}</span>
 						<Icon
 							icon="ellipsis-h"
 							class="icon"

@@ -49,7 +49,7 @@ const (
 	TaskRepeatModeFromCurrentDate
 )
 
-// Task represents an task in a project
+// Task represents a task in a project
 type Task struct {
 	// The unique, numeric id of this task.
 	ID int64 `xorm:"bigint autoincr not null unique pk" json:"id" param:"projecttask"`
@@ -119,6 +119,15 @@ type Task struct {
 	// Can be used to move a task between buckets. In that case, the new bucket must be in the same view as the old one.
 	BucketID int64 `xorm:"-" json:"bucket_id"`
 
+	// All buckets across all views this task is part of. Only present when fetching tasks with the `expand` parameter set to `buckets`.
+	Buckets []*Bucket `xorm:"-" json:"buckets,omitempty"`
+
+	// All comments of this task. Only present when fetching tasks with the `expand` parameter set to `comments`.
+	Comments []*TaskComment `xorm:"-" json:"comments,omitempty"`
+
+	// Behaves exactly the same as with the TaskCollection.Expand parameter
+	Expand []TaskCollectionExpandable `xorm:"-" json:"-" query:"expand"`
+
 	// The position of the task - any task project can be sorted as usual by this parameter.
 	// When accessing tasks via views with buckets, this is primarily used to sort them based on a range.
 	// Positions are always saved per view. They will automatically be set if you request the tasks through a view
@@ -185,7 +194,7 @@ type taskSearchOptions struct {
 	filterTimezone     string
 	isSavedFilter      bool
 	projectIDs         []int64
-	expand             TaskCollectionExpandable
+	expand             []TaskCollectionExpandable
 }
 
 // ReadAll is a dummy function to still have that endpoint documented
@@ -202,7 +211,7 @@ type taskSearchOptions struct {
 // @Param filter query string false "The filter query to match tasks by. Check out https://vikunja.io/docs/filters for a full explanation of the feature."
 // @Param filter_timezone query string false "The time zone which should be used for date match (statements like "now" resolve to different actual times)"
 // @Param filter_include_nulls query string false "If set to true the result will include filtered fields whose value is set to `null`. Available values are `true` or `false`. Defaults to `false`."
-// @Param expand query string false "If set to `subtasks`, Vikunja will fetch only tasks which do not have subtasks and then in a second step, will fetch all of these subtasks. This may result in more tasks than the pagination limit being returned, but all subtasks will be present in the response. You can only set this to `subtasks`."
+// @Param expand query array false "If set to `subtasks`, Vikunja will fetch only tasks which do not have subtasks and then in a second step, will fetch all of these subtasks. This may result in more tasks than the pagination limit being returned, but all subtasks will be present in the response. If set to `buckets`, the buckets of each task will be present in the response. If set to `reactions`, the reactions of each task will be present in the response. If set to `comments`, the first 50 comments of each task will be present in the response. You can set this multiple times with different values."
 // @Security JWTKeyAuth
 // @Success 200 {array} models.Task "The tasks"
 // @Failure 500 {object} models.Message "Internal error"
@@ -249,6 +258,16 @@ func getFilterCond(f *taskFilter, includeNulls bool) (cond builder.Cond, err err
 	}
 
 	return
+}
+
+func getNegativeFilterCondForSeparateTable(table string, cond builder.Cond) builder.Cond {
+	return builder.NotIn(
+		"tasks.id",
+		builder.
+			Select("task_id").
+			From(table).
+			Where(cond),
+	)
 }
 
 func getFilterCondForSeparateTable(table string, cond builder.Cond) builder.Cond {
@@ -335,7 +354,7 @@ func getTasksForProjects(s *xorm.Session, projects []*Project, a web.Auth, opts 
 		taskMap[t.ID] = t
 	}
 
-	err = addMoreInfoToTasks(s, taskMap, a, view)
+	err = addMoreInfoToTasks(s, taskMap, a, view, opts.expand)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -412,7 +431,7 @@ func GetTasksByUIDs(s *xorm.Session, uids []string, a web.Auth) (tasks []*Task, 
 		taskMap[t.ID] = t
 	}
 
-	err = addMoreInfoToTasks(s, taskMap, a, nil)
+	err = addMoreInfoToTasks(s, taskMap, a, nil, nil)
 	return
 }
 
@@ -551,9 +570,59 @@ func addRelatedTasksToTasks(s *xorm.Session, taskIDs []int64, taskMap map[int64]
 	return
 }
 
+func addBucketsToTasks(s *xorm.Session, a web.Auth, taskIDs []int64, taskMap map[int64]*Task) (err error) {
+	if len(taskIDs) == 0 {
+		return nil
+	}
+
+	taskBuckets := []*TaskBucket{}
+	err = s.
+		In("task_id", taskIDs).
+		Find(&taskBuckets)
+	if err != nil {
+		return err
+	}
+
+	// We need to fetch all projects for that user to make sure they only
+	// get to see buckets that they have permission to see.
+	projectIDs := []int64{}
+	allProjects, _, _, err := getAllRawProjects(s, a, "", 0, -1, false)
+	if err != nil {
+		return err
+	}
+
+	for _, project := range allProjects {
+		projectIDs = append(projectIDs, project.ID)
+	}
+
+	buckets := make(map[int64]*Bucket)
+	err = s.
+		Where(builder.In("id", builder.Select("bucket_id").
+			From("task_buckets").
+			Where(builder.In("task_id", taskIDs)))).
+		And(builder.In("project_view_id", builder.Select("id").
+			From("project_views").
+			Where(builder.In("project_id", projectIDs)))).
+		Find(&buckets)
+	if err != nil {
+		return err
+	}
+
+	for _, tb := range taskBuckets {
+		if taskMap[tb.TaskID].Buckets == nil {
+			taskMap[tb.TaskID].Buckets = []*Bucket{}
+		}
+		if bucket, exists := buckets[tb.BucketID]; exists {
+			taskMap[tb.TaskID].Buckets = append(taskMap[tb.TaskID].Buckets, bucket)
+		}
+	}
+
+	return nil
+}
+
 // This function takes a map with pointers and returns a slice with pointers to tasks
 // It adds more stuff like assignees/labels/etc to a bunch of tasks
-func addMoreInfoToTasks(s *xorm.Session, taskMap map[int64]*Task, a web.Auth, view *ProjectView) (err error) {
+func addMoreInfoToTasks(s *xorm.Session, taskMap map[int64]*Task, a web.Auth, view *ProjectView, expand []TaskCollectionExpandable) (err error) {
 
 	// No need to iterate over users and stuff if the project doesn't have tasks
 	if len(taskMap) == 0 {
@@ -606,11 +675,6 @@ func addMoreInfoToTasks(s *xorm.Session, taskMap map[int64]*Task, a web.Auth, vi
 		return err
 	}
 
-	reactions, err := getReactionsForEntityIDs(s, ReactionKindTask, taskIDs)
-	if err != nil {
-		return
-	}
-
 	var positionsMap = make(map[int64]*TaskPosition)
 	if view != nil {
 		positions, err := getPositionsForView(s, view)
@@ -619,6 +683,37 @@ func addMoreInfoToTasks(s *xorm.Session, taskMap map[int64]*Task, a web.Auth, vi
 		}
 		for _, position := range positions {
 			positionsMap[position.TaskID] = position
+		}
+	}
+
+	var reactions map[int64]ReactionMap
+	if expand != nil {
+		expanded := make(map[TaskCollectionExpandable]bool)
+		for _, expandable := range expand {
+			if expanded[expandable] {
+				continue
+			}
+
+			switch expandable {
+			case TaskCollectionExpandSubtasks:
+				// already dealt with earlier
+			case TaskCollectionExpandBuckets:
+				err = addBucketsToTasks(s, a, taskIDs, taskMap)
+				if err != nil {
+					return err
+				}
+			case TaskCollectionExpandReactions:
+				reactions, err = getReactionsForEntityIDs(s, ReactionKindTask, taskIDs)
+				if err != nil {
+					return
+				}
+			case TaskCollectionExpandComments:
+				err = addCommentsToTasks(s, taskIDs, taskMap)
+				if err != nil {
+					return err
+				}
+			}
+			expanded[expandable] = true
 		}
 	}
 
@@ -639,9 +734,11 @@ func addMoreInfoToTasks(s *xorm.Session, taskMap map[int64]*Task, a web.Auth, vi
 
 		task.IsFavorite = taskFavorites[task.ID]
 
-		r, has := reactions[task.ID]
-		if has {
-			task.Reactions = r
+		if reactions != nil {
+			r, has := reactions[task.ID]
+			if has {
+				task.Reactions = r
+			}
 		}
 
 		p, has := positionsMap[task.ID]
@@ -1594,6 +1691,7 @@ func (t *Task) Delete(s *xorm.Session, a web.Auth) (err error) {
 // @Accept json
 // @Produce json
 // @Param id path int true "The task ID"
+// @Param expand query array false "If set to `subtasks`, Vikunja will fetch only tasks which do not have subtasks and then in a second step, will fetch all of these subtasks. This may result in more tasks than the pagination limit being returned, but all subtasks will be present in the response. If set to `buckets`, the buckets of each task will be present in the response. If set to `reactions`, the reactions of each task will be present in the response. If set to `comments`, the first 50 comments of each task will be present in the response. You can set this multiple times with different values."
 // @Security JWTKeyAuth
 // @Success 200 {object} models.Task "The task"
 // @Failure 404 {object} models.Message "Task not found"
@@ -1601,6 +1699,7 @@ func (t *Task) Delete(s *xorm.Session, a web.Auth) (err error) {
 // @Router /tasks/{id} [get]
 func (t *Task) ReadOne(s *xorm.Session, a web.Auth) (err error) {
 
+	expand := t.Expand
 	*t, err = GetTaskByIDSimple(s, t.ID)
 	if err != nil {
 		return
@@ -1608,7 +1707,14 @@ func (t *Task) ReadOne(s *xorm.Session, a web.Auth) (err error) {
 	taskMap := make(map[int64]*Task, 1)
 	taskMap[t.ID] = t
 
-	err = addMoreInfoToTasks(s, taskMap, a, nil)
+	for _, expandValue := range expand {
+		err = expandValue.Validate()
+		if err != nil {
+			return
+		}
+	}
+
+	err = addMoreInfoToTasks(s, taskMap, a, nil, expand)
 	if err != nil {
 		return
 	}

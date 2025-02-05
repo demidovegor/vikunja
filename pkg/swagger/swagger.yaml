@@ -167,6 +167,18 @@ definitions:
           The bucket id. Will only be populated when the task is accessed via a view with buckets.
           Can be used to move a task between buckets. In that case, the new bucket must be in the same view as the old one.
         type: integer
+      buckets:
+        description: All buckets across all views this task is part of. Only present
+          when fetching tasks with the `expand` parameter set to `buckets`.
+        items:
+          $ref: '#/definitions/models.Bucket'
+        type: array
+      comments:
+        description: All comments of this task. Only present when fetching tasks with
+          the `expand` parameter set to `comments`.
+        items:
+          $ref: '#/definitions/models.TaskComment'
+        type: array
       cover_image_attachment_id:
         description: If this task has a cover image, the field will return the id
           of the attachment that is the cover image.
@@ -742,6 +754,18 @@ definitions:
           The bucket id. Will only be populated when the task is accessed via a view with buckets.
           Can be used to move a task between buckets. In that case, the new bucket must be in the same view as the old one.
         type: integer
+      buckets:
+        description: All buckets across all views this task is part of. Only present
+          when fetching tasks with the `expand` parameter set to `buckets`.
+        items:
+          $ref: '#/definitions/models.Bucket'
+        type: array
+      comments:
+        description: All comments of this task. Only present when fetching tasks with
+          the `expand` parameter set to `comments`.
+        items:
+          $ref: '#/definitions/models.TaskComment'
+        type: array
       cover_image_attachment_id:
         description: If this task has a cover image, the field will return the id
           of the attachment that is the cover image.
@@ -1464,6 +1488,8 @@ definitions:
     type: object
   v1.UserWithSettings:
     properties:
+      auth_provider:
+        type: string
       created:
         description: A timestamp when this task was created. You cannot change this
           value.
@@ -1496,10 +1522,17 @@ definitions:
     type: object
   v1.authInfo:
     properties:
+      ldap:
+        $ref: '#/definitions/v1.ldapAuthInfo'
       local:
         $ref: '#/definitions/v1.localAuthInfo'
       openid_connect:
         $ref: '#/definitions/v1.openIDAuthInfo'
+    type: object
+  v1.ldapAuthInfo:
+    properties:
+      enabled:
+        type: boolean
     type: object
   v1.legalInfo:
     properties:
@@ -1511,6 +1544,8 @@ definitions:
   v1.localAuthInfo:
     properties:
       enabled:
+        type: boolean
+      registration_enabled:
         type: boolean
     type: object
   v1.openIDAuthInfo:
@@ -1551,8 +1586,6 @@ definitions:
       motd:
         type: string
       public_teams_enabled:
-        type: boolean
-      registration_enabled:
         type: boolean
       task_attachments_enabled:
         type: boolean
@@ -3337,7 +3370,9 @@ paths:
     get:
       consumes:
       - application/json
-      description: Returns all tasks for the current project.
+      description: Returns all tasks for the selected project. When the requested
+        view is a kanban view, a list of buckets containing the tasks will be returned.
+        Otherwise, a list of tasks will be returned.
       parameters:
       - description: The project ID.
         in: path
@@ -3396,11 +3431,14 @@ paths:
       - description: If set to `subtasks`, Vikunja will fetch only tasks which do
           not have subtasks and then in a second step, will fetch all of these subtasks.
           This may result in more tasks than the pagination limit being returned,
-          but all subtasks will be present in the response. You can only set this
-          to `subtasks`.
+          but all subtasks will be present in the response. If set to `buckets`, the
+          buckets of each task will be present in the response. If set to `reactions`,
+          the reactions of each task will be present in the response. If set to `comments`,
+          the first 50 comments of each task will be present in the response. You
+          can set this multiple times with different values.
         in: query
         name: expand
-        type: string
+        type: array
       produces:
       - application/json
       responses:
@@ -4473,6 +4511,17 @@ paths:
         name: id
         required: true
         type: integer
+      - description: If set to `subtasks`, Vikunja will fetch only tasks which do
+          not have subtasks and then in a second step, will fetch all of these subtasks.
+          This may result in more tasks than the pagination limit being returned,
+          but all subtasks will be present in the response. If set to `buckets`, the
+          buckets of each task will be present in the response. If set to `reactions`,
+          the reactions of each task will be present in the response. If set to `comments`,
+          the first 50 comments of each task will be present in the response. You
+          can set this multiple times with different values.
+        in: query
+        name: expand
+        type: array
       produces:
       - application/json
       responses:
@@ -5399,11 +5448,14 @@ paths:
       - description: If set to `subtasks`, Vikunja will fetch only tasks which do
           not have subtasks and then in a second step, will fetch all of these subtasks.
           This may result in more tasks than the pagination limit being returned,
-          but all subtasks will be present in the response. You can only set this
-          to `subtasks`.
+          but all subtasks will be present in the response. If set to `buckets`, the
+          buckets of each task will be present in the response. If set to `reactions`,
+          the reactions of each task will be present in the response. If set to `comments`,
+          the first 50 comments of each task will be present in the response. You
+          can set this multiple times with different values.
         in: query
         name: expand
-        type: string
+        type: array
       produces:
       - application/json
       responses:

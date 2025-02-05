@@ -85,6 +85,14 @@ func TestTaskCollection_ReadAll(t *testing.T) {
 		Created:     testCreatedTime,
 		Updated:     testUpdatedTime,
 	}
+	label5 := &Label{
+		ID:          5,
+		Title:       "Label #5",
+		CreatedByID: 2,
+		CreatedBy:   user2,
+		Created:     testCreatedTime,
+		Updated:     testUpdatedTime,
+	}
 
 	// We use individual variables for the tasks here to be able to rearrange or remove ones more easily
 	task1 := &Task{
@@ -97,9 +105,6 @@ func TestTaskCollection_ReadAll(t *testing.T) {
 		CreatedBy:   user1,
 		ProjectID:   1,
 		IsFavorite:  true,
-		Reactions: ReactionMap{
-			"👋": []*user.User{user1},
-		},
 		Labels: []*Label{
 			label4,
 		},
@@ -158,6 +163,11 @@ func TestTaskCollection_ReadAll(t *testing.T) {
 		},
 		Created: time.Unix(1543626724, 0).In(loc),
 		Updated: time.Unix(1543626724, 0).In(loc),
+	}
+	var task1WithReaction = &Task{}
+	*task1WithReaction = *task1
+	task1WithReaction.Reactions = ReactionMap{
+		"👋": []*user.User{user1},
 	}
 	task2 := &Task{
 		ID:          2,
@@ -591,6 +601,7 @@ func TestTaskCollection_ReadAll(t *testing.T) {
 		},
 		Labels: []*Label{
 			label4,
+			label5,
 		},
 		RelatedTasks: map[RelationKind][]*Task{
 			RelationKindRelated: {
@@ -643,6 +654,8 @@ func TestTaskCollection_ReadAll(t *testing.T) {
 		FilterIncludeNulls bool
 		Filter             string
 
+		Expand []TaskCollectionExpandable
+
 		CRUDable web.CRUDable
 		Rights   web.Rights
 	}
@@ -679,6 +692,51 @@ func TestTaskCollection_ReadAll(t *testing.T) {
 			args:   defaultArgs,
 			want: []*Task{
 				task1,
+				task2,
+				task3,
+				task4,
+				task5,
+				task6,
+				task7,
+				task8,
+				task9,
+				task10,
+				task11,
+				task12,
+				task15,
+				task16,
+				task17,
+				task18,
+				task19,
+				task20,
+				task21,
+				task22,
+				task23,
+				task24,
+				task25,
+				task26,
+				task27,
+				task28,
+				task29,
+				task30,
+				task31,
+				task32,
+				task33,
+				task35,
+				task39,
+			},
+			wantErr: false,
+		},
+		{
+			name: "ReadAll Tasks with expanded reaction",
+			fields: fields{
+				Expand: []TaskCollectionExpandable{
+					TaskCollectionExpandReactions,
+				},
+			},
+			args: defaultArgs,
+			want: []*Task{
+				task1WithReaction,
 				task2,
 				task3,
 				task4,
@@ -1206,6 +1264,34 @@ func TestTaskCollection_ReadAll(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "filter labels not eq",
+			fields: fields{
+				Filter: "labels != 5",
+			},
+			args: defaultArgs,
+			want: []*Task{
+				task1,
+				task2,
+				//task35,
+				// task 35 has a label 5 and 4
+			},
+			wantErr: false,
+		},
+		{
+			name: "filter labels not in",
+			fields: fields{
+				Filter: "labels not in 5",
+			},
+			args: defaultArgs,
+			want: []*Task{
+				task1,
+				task2,
+				//task35,
+				// task 35 has a label 5 and 4
+			},
+			wantErr: false,
+		},
+		{
 			name: "filter project_id",
 			fields: fields{
 				Filter: "project_id = 6",
@@ -1427,6 +1513,8 @@ func TestTaskCollection_ReadAll(t *testing.T) {
 				FilterIncludeNulls: tt.fields.FilterIncludeNulls,
 
 				Filter: tt.fields.Filter,
+
+				Expand: tt.fields.Expand,
 
 				CRUDable: tt.fields.CRUDable,
 				Rights:   tt.fields.Rights,

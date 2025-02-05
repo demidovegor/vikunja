@@ -89,6 +89,7 @@ func getOrderByDBStatement(opts *taskSearchOptions) (orderby string, err error) 
 func convertFiltersToDBFilterCond(rawFilters []*taskFilter, includeNulls bool) (filterCond builder.Cond, err error) {
 
 	var dbFilters = make([]builder.Cond, 0, len(rawFilters))
+	var addLabelInFilter = false
 	// To still find tasks with nil values, we exclude 0s when comparing with >/< values.
 	for _, f := range rawFilters {
 
@@ -152,6 +153,28 @@ func convertFiltersToDBFilterCond(rawFilters []*taskFilter, includeNulls bool) (
 				return nil, err
 			}
 
+			if f.comparator == taskFilterComparatorNotEquals {
+				dbFilters = append(dbFilters, getNegativeFilterCondForSeparateTable(
+					"label_tasks",
+					builder.Eq{"label_id": f.value},
+				))
+				if !includeNulls {
+					addLabelInFilter = true
+				}
+				continue
+			}
+
+			if f.comparator == taskFilterComparatorNotIn {
+				dbFilters = append(dbFilters, getNegativeFilterCondForSeparateTable(
+					"label_tasks",
+					builder.In("label_id", f.value),
+				))
+				if !includeNulls {
+					addLabelInFilter = true
+				}
+				continue
+			}
+
 			dbFilters = append(dbFilters, getFilterCondForSeparateTable("label_tasks", filter))
 			continue
 		}
@@ -205,6 +228,16 @@ func convertFiltersToDBFilterCond(rawFilters []*taskFilter, includeNulls bool) (
 					}
 				}
 			}
+		}
+
+		if addLabelInFilter {
+			filterCond = builder.And(
+				filterCond,
+				builder.In("tasks.id", builder.
+					Select("task_id").
+					From("label_tasks"),
+				),
+			)
 		}
 	}
 
@@ -286,7 +319,15 @@ func (d *dbTaskSearcher) Search(opts *taskSearchOptions) (tasks []*Task, totalCo
 		distinct += ", task_positions.position"
 	}
 
-	if opts.expand == TaskCollectionExpandSubtasks {
+	var expandSubtasks = false
+	for _, expandable := range opts.expand {
+		if expandable == TaskCollectionExpandSubtasks {
+			expandSubtasks = true
+			break
+		}
+	}
+
+	if expandSubtasks {
 		cond = builder.And(cond, builder.IsNull{"task_relations.id"})
 	}
 
@@ -307,7 +348,7 @@ func (d *dbTaskSearcher) Search(opts *taskSearchOptions) (tasks []*Task, totalCo
 	if joinTaskBuckets {
 		query = query.Join("LEFT", "task_buckets", "task_buckets.task_id = tasks.id")
 	}
-	if opts.expand == TaskCollectionExpandSubtasks {
+	if expandSubtasks {
 		query = query.Join("LEFT", "task_relations", "tasks.id = task_relations.task_id and task_relations.relation_kind = 'parenttask'")
 	}
 
@@ -321,7 +362,7 @@ func (d *dbTaskSearcher) Search(opts *taskSearchOptions) (tasks []*Task, totalCo
 	}
 
 	// fetch subtasks when expanding
-	if opts.expand == TaskCollectionExpandSubtasks {
+	if expandSubtasks {
 		subtasks := []*Task{}
 
 		taskIDs := []int64{}
@@ -374,7 +415,7 @@ func (d *dbTaskSearcher) Search(opts *taskSearchOptions) (tasks []*Task, totalCo
 	if joinTaskBuckets {
 		queryCount = queryCount.Join("LEFT", "task_buckets", "task_buckets.task_id = tasks.id")
 	}
-	if opts.expand == TaskCollectionExpandSubtasks {
+	if expandSubtasks {
 		queryCount = queryCount.Join("LEFT", "task_relations", "tasks.id = task_relations.task_id and task_relations.relation_kind = 'parenttask'")
 	}
 	totalCount, err = queryCount.

@@ -15,7 +15,6 @@ export interface ConfigState {
 	motd: string,
 	linkSharingEnabled: boolean,
 	maxFileSize: string,
-	registrationEnabled: boolean,
 	availableMigrators: Array<keyof typeof MIGRATORS>,
 	taskAttachmentsEnabled: boolean,
 	totpEnabled: boolean,
@@ -30,6 +29,10 @@ export interface ConfigState {
 	demoModeEnabled: boolean,
 	auth: {
 		local: {
+			enabled: boolean,
+			registrationEnabled: boolean,
+		},
+		ldap: {
 			enabled: boolean,
 		},
 		openidConnect: {
@@ -49,7 +52,6 @@ export const useConfigStore = defineStore('config', () => {
 		motd: '',
 		linkSharingEnabled: true,
 		maxFileSize: '20MB',
-		registrationEnabled: true,
 		availableMigrators: [],
 		taskAttachmentsEnabled: true,
 		totpEnabled: true,
@@ -65,6 +67,10 @@ export const useConfigStore = defineStore('config', () => {
 		auth: {
 			local: {
 				enabled: true,
+				registrationEnabled: true,
+			},
+			ldap: {
+				enabled: false,
 			},
 			openidConnect: {
 				enabled: false,

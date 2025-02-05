@@ -76,6 +76,19 @@ func (p *Provider) setOicdProvider() (err error) {
 	return err
 }
 
+func (p *Provider) Issuer() (issuerURL string, err error) {
+	type Issuer struct {
+		Issuer string `json:"issuer"`
+	}
+
+	iss := &Issuer{}
+	err = p.openIDProvider.Claims(iss)
+	if err != nil {
+		return "", err
+	}
+	return iss.Issuer, nil
+}
+
 // HandleCallback handles the auth request callback after redirecting from the provider with an auth code
 // @Summary Authenticate a user with OpenID Connect
 // @Description After a redirect from the OpenID Connect provider to the frontend has been made with the authentication `code`, this endpoint can be used to obtain a jwt token for that user and thus log them in.
@@ -98,13 +111,14 @@ func HandleCallback(c echo.Context) error {
 	// Check if the provider exists
 	providerKey := c.Param("provider")
 	provider, err := GetProvider(providerKey)
-	log.Debugf("Provider: %v", provider)
 	if err != nil {
 		return handler.HandleHTTPError(err)
 	}
 	if provider == nil {
 		return c.JSON(http.StatusBadRequest, models.Message{Message: "Provider does not exist"})
 	}
+
+	log.Debugf("Trying to authenticate user using provider: %s", provider.Key)
 
 	provider.Oauth2Config.RedirectURL = cb.RedirectURL
 
@@ -404,32 +418,7 @@ func getOrCreateUser(s *xorm.Session, cl *claims, issuer, subject string) (u *us
 			Subject:  subject,
 		}
 
-		// Check if we actually have a preferred username and generate a random one right away if we don't
-		if uu.Username == "" {
-			uu.Username = petname.Generate(3, "-")
-		}
-
-		u, err = user.CreateUser(s, uu)
-		if err != nil && !user.IsErrUsernameExists(err) {
-			return nil, err
-		}
-
-		// If their preferred username is already taken, generate a random one
-		if user.IsErrUsernameExists(err) {
-			uu.Username = petname.Generate(3, "-")
-			u, err = user.CreateUser(s, uu)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		// And create their project
-		err = models.CreateNewProjectForUser(s, u)
-		if err != nil {
-			return nil, err
-		}
-
-		return
+		return auth.CreateUserWithRandomUsername(s, uu)
 	}
 
 	// If it exists, check if the email address changed and change it if not

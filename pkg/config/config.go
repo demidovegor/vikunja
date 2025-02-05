@@ -29,6 +29,7 @@ import (
 	_ "time/tzdata" // Imports time zone data instead of relying on the os
 
 	"code.vikunja.io/api/pkg/log"
+
 	"github.com/spf13/viper"
 )
 
@@ -76,6 +77,20 @@ const (
 	AuthLocalEnabled    Key = `auth.local.enabled`
 	AuthOpenIDEnabled   Key = `auth.openid.enabled`
 	AuthOpenIDProviders Key = `auth.openid.providers`
+
+	AuthLdapEnabled    Key = `auth.ldap.enabled`
+	AuthLdapHost       Key = `auth.ldap.host`
+	AuthLdapPort       Key = `auth.ldap.port`
+	AuthLdapBaseDN     Key = `auth.ldap.basedn`
+	AuthLdapUserFilter Key = `auth.ldap.userfilter`
+	AuthLdapUseTLS     Key = `auth.ldap.usetls`
+	AuthLdapVerifyTLS  Key = `auth.ldap.verifytls`
+	AuthLdapBindDN     Key = `auth.ldap.binddn`
+	// #nosec G101
+	AuthLdapBindPassword         Key = `auth.ldap.bindpassword`
+	AuthLdapAttributeUsername    Key = `auth.ldap.attribute.username`
+	AuthLdapAttributeEmail       Key = `auth.ldap.attribute.email`
+	AuthLdapAttributeDisplayname Key = `auth.ldap.attribute.displayname`
 
 	LegalImprintURL Key = `legal.imprinturl`
 	LegalPrivacyURL Key = `legal.privacyurl`
@@ -332,6 +347,15 @@ func InitDefaultConfig() {
 	AuthLocalEnabled.setDefault(true)
 	AuthOpenIDEnabled.setDefault(false)
 
+	AuthLdapEnabled.setDefault(false)
+	AuthLdapHost.setDefault("localhost")
+	AuthLdapPort.setDefault(389)
+	AuthLdapUseTLS.setDefault(true)
+	AuthLdapVerifyTLS.setDefault(true)
+	AuthLdapAttributeUsername.setDefault("uid")
+	AuthLdapAttributeEmail.setDefault("mail")
+	AuthLdapAttributeDisplayname.setDefault("displayName")
+
 	// Database
 	DatabaseType.setDefault("sqlite")
 	DatabaseHost.setDefault("localhost")
@@ -458,6 +482,40 @@ func readConfigValuesFromFiles() {
 	}
 }
 
+func setConfigFromEnv() error {
+	envKeys := os.Environ()
+	configMap := make(map[string]any)
+	for _, envKeyValue := range envKeys {
+		keyValue := strings.SplitN(envKeyValue, "=", 2)
+		if len(keyValue) != 2 {
+			continue
+		}
+		key, value := keyValue[0], keyValue[1]
+
+		if strings.HasPrefix(key, "VIKUNJA_") {
+			formattedKey := strings.ToLower(strings.TrimPrefix(key, "VIKUNJA_"))
+			keys := strings.Split(formattedKey, "_")
+			currentMap := configMap
+
+			for i, part := range keys {
+				if i == len(keys)-1 {
+					// Set the value at the final level
+					currentMap[part] = value
+				} else {
+					// Check if the key exists at the current level, create a new map if not
+					if _, exists := currentMap[part]; !exists {
+						currentMap[part] = make(map[string]any)
+					}
+
+					// Move into the nested map
+					currentMap = currentMap[part].(map[string]any)
+				}
+			}
+		}
+	}
+	return viper.MergeConfigMap(configMap)
+}
+
 // InitConfig initializes the config, sets defaults etc.
 func InitConfig() {
 
@@ -469,8 +527,6 @@ func InitConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	// Just load environment variables
-	_ = viper.ReadInConfig()
 	log.ConfigureLogger(LogEnabled.GetBool(), LogStandard.GetString(), LogPath.GetString(), LogLevel.GetString())
 
 	// Load the config file
@@ -500,6 +556,11 @@ func InitConfig() {
 		}
 	} else {
 		log.Info("No config file found, using default or config from environment variables.")
+	}
+
+	err = setConfigFromEnv()
+	if err != nil {
+		log.Warningf("Failed to set config from environment variables: %s", err.Error())
 	}
 
 	readConfigValuesFromFiles()

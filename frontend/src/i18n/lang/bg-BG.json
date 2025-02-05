@@ -99,7 +99,8 @@
         "defaultView": "Изглед по подразбиране",
         "timezone": "Часова зона",
         "overdueTasksRemindersTime": "Час за напомняне за просрочени задачи",
-        "filterUsedOnOverview": "Запазен филтър, използван на страницата за общ преглед"
+        "filterUsedOnOverview": "Запазен филтър, използван на страницата за общ преглед",
+        "externalUserNameChange": "Your name is managed by your login provider ({provider}). To change it, please update it there instead."
       },
       "totp": {
         "title": "Двуфакторно удостоверяване",
@@ -210,7 +211,7 @@
     "archivedMessage": "Този проект е архивиран. Не е възможно да създавате нови или редактирате задачи за него.",
     "archived": "Архивиран",
     "showArchived": "Показване на архивираните",
-    "title": "Заглавие на проекта",
+    "title": "Title",
     "color": "Цвят",
     "projects": "Проекти",
     "parent": "Родителски проект",
@@ -219,6 +220,10 @@
     "shared": "Споделени проекти",
     "noDescriptionAvailable": "Няма налично описание на проекта.",
     "inboxTitle": "Входяща кутия",
+    "favorite": "Mark this project as favorite",
+    "unfavorite": "Remove this project from favorites",
+    "openSettingsMenu": "Open project settings menu",
+    "description": "Project description",
     "create": {
       "header": "Нов проект",
       "titlePlaceholder": "Заглавието на проекта отива тук…",
@@ -583,7 +588,8 @@
     "created": "Създадено на",
     "createdBy": "Създадено от {0}",
     "actions": "Действия",
-    "cannotBeUndone": "Това действие не може да бъде отменено!"
+    "cannotBeUndone": "Това действие не може да бъде отменено!",
+    "avatarOfUser": "{user}'s profile image"
   },
   "input": {
     "resetColor": "Нулиране на цвета",

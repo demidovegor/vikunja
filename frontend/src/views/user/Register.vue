@@ -1,5 +1,5 @@
 <template>
-	<div v-if="configStore.registrationEnabled">
+	<div v-if="configStore.auth.local.registrationEnabled">
 		<Message
 			v-if="errorMessage !== ''"
 			variant="danger"
@@ -173,7 +173,7 @@ const validateUsername = useDebounceFn(() => {
 		return
 	}
 
-	if (credentials.username.indexOf('://') !== -1) {
+	if (credentials.username.indexOf('://') !== -1 || credentials.username.indexOf('.') !== -1) {
 		usernameValid.value = t('user.auth.usernameMustNotLookLikeUrl')
 		return
 	}
